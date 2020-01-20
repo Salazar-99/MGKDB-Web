@@ -1,0 +1,4 @@
+mgkdb-web-venv/
+__pycache__/
+*.pyo
+*.pyc

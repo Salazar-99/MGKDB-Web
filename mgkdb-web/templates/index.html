@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ name }} - {% endblock %}
+{% block head %}
+    <!--The super() function passes down the content from the template being extended-->
+    {{ super() }}
+{% endblock %}
+{% block body %}
+   <h1> Welcome to MGKDB! </h1>
+{% endblock %}
