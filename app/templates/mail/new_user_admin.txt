@@ -1,0 +1,1 @@
+New user: {{ user.first_name|capitalize }} {{ user.last_name|capitalize }} has joined.
