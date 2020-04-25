@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask import current_app
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from . import db, login_manager
 
 class User(UserMixin, db.Model):
@@ -12,10 +13,12 @@ class User(UserMixin, db.Model):
     last_name = db.Column(db.String(64), index=True)
     email = db.Column(db.String(64), unique=True, index=True)
     password_hash = db.Column(db.String(128))
+    role = db.Column(db.String(128))
+    reason = db.Column(db.String(128))
     #User must verify email address
-    #verified = db.Column(db.Boolean(), default=False)
+    verified = db.Column(db.Boolean(), default=False)
     #For user approval by admin
-    #approved = db.Column(db.Boolean(), default=False)
+    approved = db.Column(db.Boolean(), default=False)
 
     #Prevents password from being read from database
     @property
@@ -30,7 +33,25 @@ class User(UserMixin, db.Model):
     #Checks if user password is correct
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+    #Creates token for email verification
+    def generate_verification_token(self, expiration=3600):
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps({'verify': self.id}).decode('utf-8')
 
+    #Function for confirming user using token
+    def verify(self, token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token.encode('utf-8'))
+        except:
+            return False
+        if data.get('verify') != self.id:
+            return False
+        self.verified = True
+        db.session.add(self)
+        return True
+    
     #Human readable representation -
     #Each user is identified with their email for testing/debugging purposes
     def __repr__(self):

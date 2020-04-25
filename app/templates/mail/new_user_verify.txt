@@ -1,0 +1,3 @@
+Welcome to MGKDB Web. 
+In order to verify your account and gain access to MGKDB data, please click the button below.
+{{ url_for('main.verify', token=token, _external=True) }}

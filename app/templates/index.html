@@ -3,8 +3,18 @@
 {% block title %}Home - {% endblock %}
 
 {% block page_content %}
+<!--Flashed Messages-->
+<div class="container">
+  {% for message in get_flashed_messages() %}
+  <div class="alert alert-warning">
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+      {{ message }}
+  </div>
+  {% endfor %}
+</div>
+
 <!--Top of page image and text-->
-<header class="masthead" style="background-image: url(static/tokamak.jpeg); background-size: 100%;">
+<header class="masthead" style="background-color:#3950bf;">
     <div class="container-fluid h-100">
       <div class="row h-100 align-items-center">
         <div class="col-12 text-center">

@@ -21,3 +21,5 @@ class UserModelTestCase(unittest.TestCase):
         test_user_1 = User(password='dog')
         test_user_2 = User(password='dog')
         self.assertTrue(test_user_1.password_hash != test_user_2.password_hash)
+
+    #TODO: Add confirmation tests

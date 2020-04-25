@@ -1,4 +1,4 @@
-<!--Source: https://github.com/leemunroe/responsive-html-email-template-->
+<!--Adapted from: https://github.com/leemunroe/responsive-html-email-template-->
 
 <!doctype html>
 <html>
@@ -7,12 +7,6 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>MGKDB Web - Verify Account</title>
     <style>
-    /* -------------------------------------
-        INLINED WITH htmlemail.io/inline
-    ------------------------------------- */
-    /* -------------------------------------
-        RESPONSIVE AND MOBILE FRIENDLY STYLES
-    ------------------------------------- */
     @media only screen and (max-width: 620px) {
       table[class=body] h1 {
         font-size: 28px !important;
@@ -122,7 +116,8 @@
                                 <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: auto;">
                                   <tbody>
                                     <tr>
-                                      <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; background-color: black; border-radius: 5px; text-align: center;"> <a href="http://htmlemail.io" target="_blank" style="display: inline-block; color: #ffffff; background-color: black; border: solid 1px black; border-radius: 5px; box-sizing: border-box; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize; border-color: black;">Verify Account</a> </td>
+                                      <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; background-color: black; border-radius: 5px; text-align: center;"> 
+                                        <a href={{ url_for('main.verify', token=token, _external=True) }} target="_blank" style="display: inline-block; color: #ffffff; background-color: black; border: solid 1px black; border-radius: 5px; box-sizing: border-box; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize; border-color: black;">Verify Account</a> </td>
                                     </tr>
                                   </tbody>
                                 </table>
@@ -135,7 +130,6 @@
                   </table>
                 </td>
               </tr>
-
             <!-- END MAIN CONTENT AREA -->
             </table>
           <!-- END CENTERED WHITE CONTAINER -->

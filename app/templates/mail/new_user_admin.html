@@ -1,4 +1,4 @@
-<!--Source: https://github.com/leemunroe/responsive-html-email-template-->
+<!--Adapted from: https://github.com/leemunroe/responsive-html-email-template-->
 
 <!doctype html>
 <html>
@@ -7,12 +7,6 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>MGKDB Web - New User</title>
     <style>
-    /* -------------------------------------
-        INLINED WITH htmlemail.io/inline
-    ------------------------------------- */
-    /* -------------------------------------
-        RESPONSIVE AND MOBILE FRIENDLY STYLES
-    ------------------------------------- */
     @media only screen and (max-width: 620px) {
       table[class=body] h1 {
         font-size: 28px !important;
@@ -113,9 +107,30 @@
                   <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%;">
                     <tr>
                       <td style="font-family: sans-serif; font-size: 14px; vertical-align: top;">
-                        <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">A new user has signed up for MGKDB Web.</p>
-                        <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">Name: {{ user.first_name|capitalize }} {{ user.last_name|capitalize }}</p>
-                        <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">Email: {{ user.email }}</p>
+                        <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">A new user has requested an account for MGKDB Web.</p>
+                        <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;"><b>Name: </b>{{ user.first_name|capitalize }} {{ user.last_name|capitalize }}</p>
+                        <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;"><b>Email: </b>{{ user.email }}</p>
+                        <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;"><b>Role: </b>{{ user.role }}</p>
+                        <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;"><b>Reason For Request: </b>{{ user.reason }}</p>
+                        <!--Accept/Deny Buttons-->
+                        <table border="0" cellpadding="0" cellspacing="0" class="btn btn-primary" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%; box-sizing: border-box;">
+                          <tbody>
+                            <tr>
+                              <td align="left" style="font-family: sans-serif; font-size: 14px; vertical-align: top; padding-bottom: 15px;">
+                                <table border="0" cellpadding="0" cellspacing="5" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: auto;">
+                                  <tbody>
+                                    <tr>
+                                      <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; background-color: green; border-radius: 5px; text-align: center;"> 
+                                        <a href={{ url_for('main.approve', email=user.email, _external=True) }} target="_blank" style="display: inline-block; color: #ffffff; background-color: green; border: solid 1px green; border-radius: 5px; box-sizing: border-box; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize; border-color: green;">Approve</a> </td> 
+                                        <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; background-color: red; border-radius: 5px; text-align: center;"> 
+                                          <a href={{ url_for('main.deny', email=user.email, _external=True) }} target="_blank" style="display: inline-block; color: #ffffff; background-color: red; border: solid 1px red; border-radius: 5px; box-sizing: border-box; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize; border-color: red;">Deny</a> </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </td>
                     </tr>
                   </table>

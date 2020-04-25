@@ -1,6 +1,6 @@
 import os
-from flask import Flask, render_template, url_for, session, redirect, flash, request
-from flask_login import login_user, logout_user, login_required
+from flask import Flask, Response, render_template, url_for, session, redirect, flash, request
+from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 #Dots used for relative imports
 from . import main
@@ -20,7 +20,7 @@ def signup():
     form = SignupForm()
     #Triggers after form submission
     if form.validate_on_submit():
-        #Check if email is already used
+        #Check if email already exists
         user = User.query.filter_by(email=form.email.data).first()
         #If not, save user
         if user is None:
@@ -29,20 +29,24 @@ def signup():
                 user = User(first_name=form.first_name.data,
                             last_name=form.last_name.data,
                             email=form.email.data,
-                            password=form.password.data)
+                            password=form.password.data,
+                            role=form.role.data,
+                            reason=form.reason.data)
                 db.session.add(user)
                 db.session.commit()
-                #Send email to admin account notifying of new user
-                send_email('web.mgkdb@gmail.com', 'New User', 'mail/new_user_admin', user=user)
-                #TODO: Implement email verification
-                #send_email('user.email', 'Verify Account', '\/mail/new_user_verify', user=user)
+                #Generate verification token
+                token = user.generate_verification_token()
+                #Send email to verify account
+                send_email(user.email, 'Verify Account', 'mail/new_user_verify', user=user, token=token)
+                flash('A verification email has been sent to your email.')
+                return redirect(url_for('main.index'))      
             else:
                 flash('Password verification failed, please try again')
-                return redirect(url_for('.signup'))    
-            return redirect(url_for('.login'))
+                return redirect(url_for('main.signup'))    
+            return redirect(url_for('main.login'))
         else:
             flash('A user with that email already exists')
-            return redirect(url_for('.signup'))
+            return redirect(url_for('main.signup'))
     return render_template('signup.html', form=form)    
 
 #Login page
@@ -73,27 +77,49 @@ def logout():
     return redirect(url_for('main.index'))
 
 #Verify route
-@main.route('/verify')
-def verify():
-    #Change "verified" column in database to true
-    return render_template('verify.html')
+@main.route('/verify/<token>')
+@login_required
+def verify(token):
+    if current_user.verified:
+        return redirect(url_for('main.index'))
+    if current_user.verify(token):
+        #Finishes off the changes made in User class verify method
+        db.session.commit()
+        #Sends email for admin approval following verification
+        user=current_user
+        send_email('web.mgkdb@gmail.com', 'New User', 'mail/new_user_admin', user=user)
+        flash('Your account has been successfully verified, await admin approval for access.')
+    else:
+        flash('The verification link is invalid or has expired.')
+    return redirect(url_for('main.index'))
 
 #Account approval route  - for use by admin
-def approve():
+@main.route('/approve/<email>')
+def approve(email):
     #Change "approved" column in database to True
+    user = User.query.filter_by(email=email).update(dict(approved=True))
+    db.session.commit()    
     return render_template('approve.html')
 
 #Account denial route - for use by admin
-def deny():
+@main.route('/deny/<email>')
+def deny(email):
     #Delete user from database
-    
+    user = User.query.filter_by(email=email).delete()
+    db.session.commit()
     return render_template('deny.html')
+
+#@auth.before_app_request
+#def before_request():
+    #if current_user.is_authenticated and not current_user.approved:
+        #flash('Your account has not been approved yet')
+        #return redirect(url_for('main.index'))
 
 #Data page
 @main.route('/data')
 @login_required
 def data():
-    collection = mongo.db['NonlinRuns']
+    collection = mongo.db['LinearRuns']
     #Instance of pymongo cursor class used to iterate over query results
     cursor = collection.find({})
     runs = []
@@ -108,3 +134,13 @@ def data():
         temp = {"user": run['Meta']['user'], "keywords": run['Meta']['keywords'],"time": time, "params": display_params}
         runs.append(temp)
     return render_template('data.html', runs=runs)
+
+#Function for downlaoding run by id
+@main.route('/download/<collection>/<id>')
+def download_run(collection, id):
+    fs = gridfs.GridFSBucket(mongo.db)
+    #Get run by id
+    run = collection.find_one({"_id": id})
+    #Create response from run
+    response = make_response(run.read())
+    return response   

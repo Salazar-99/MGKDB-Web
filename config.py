@@ -6,7 +6,7 @@ class Config:
     MAIL_PORT = int(os.environ.get('MAIL_PORT', '587'))
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME') or 'web.mgkdb@gmail.com'
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD') or 'gyrokinetic'
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD') or 'mgkdbweb'
     MAIL_SUBJECT_PREFIX = '[MGKDB Web] '
     MAIL_SENDER = 'MGKDB Web Admin <web.mgkdb@gmail.com>'
     ADMIN = os.environ.get('ADMIN')
@@ -19,12 +19,12 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://test:test@localhost/users_dev'
-    MONGO_URI = "mongodb://localhost:27017/mgk_fusion"
+    MONGO_URI = "mongodb://localhost:27018/mgk_fusion"
 
 class TestingConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://test:test@localhost/users_test'
-    MONGO_URI = "mongodb://localhost:27017/mgk_fusion"
+    MONGO_URI = "mongodb://localhost:27018/mgk_fusion"
 
 class ProductionConfig(Config):
     DEBUG = True
