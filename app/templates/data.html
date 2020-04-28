@@ -6,23 +6,8 @@
 <div class="container-fluid">
   <div class="row">
     <!--Search Filters-->
-    <div class="col-sm-2 border-right border-dark" style="background-color: rgba(159, 162, 172, 0.425);"><br>
-      <h1 class="font-weight-light">
-        Filters
-      </h1><br>
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" value="" id="linear">
-        <label class="form-check-label" for="linear">
-          Linear Runs
-        </label>
-      </div>
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" value="" id="nonlinear">
-        <label class="form-check-label" for="nonlinear">
-          Nonlinear Runs
-        </label>
-      </div>
-    </div>
+    <!--TODO: Add formatting to the form-->
+    {{ render_form(form) }}
     <!--Data Listings-->
     <div class="col-sm-10">
       <div class="container-fluid"><br>
@@ -39,20 +24,9 @@
               <a href="#" class="list-group-item list-group-item-action" style="border-radius: 15px;">
                 <!--Button used to expand params-->
                 <button data-toggle="collapse" data-target="#params" type="button" class="btn btn-light">+</button>&nbsp;&nbsp;
-                <!--TODO: Is it stupid if it works?-->
+                <!--Filling in relevant info for each run-->
                 <b>User:</b> {{ run['user']|capitalize }} 
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                 <b>Keywords:</b> {{ run['keywords'] }}
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                 <b>Upload Date:</b> {{ run['time'] }} &nbsp;&nbsp; 
                 <button type="button" class="btn btn-dark">Download</button>
                 <!--Collapsible div that displays run parameters-->

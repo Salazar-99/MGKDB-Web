@@ -116,24 +116,74 @@ def deny(email):
         #return redirect(url_for('main.index'))
 
 #Data page
-@main.route('/data')
+@main.route('/data', methods=['GET'])
 @login_required
 def data():
-    collection = mongo.db['LinearRuns']
-    #Instance of pymongo cursor class used to iterate over query results
-    cursor = collection.find({})
-    runs = []
-    for run in cursor:
-        #Getting upload time of run
-        time = run['_id'].generation_time
-        params = run['Parameters']
-        #Converting the dictionary into a list for ease of use in template
-        display_params = []
-        for key, value in params.items():
-            display_params.append([key,value])
-        temp = {"user": run['Meta']['user'], "keywords": run['Meta']['keywords'],"time": time, "params": display_params}
-        runs.append(temp)
-    return render_template('data.html', runs=runs)
+    form = FilterForm()
+    if form.validate_on_submit:
+        collection = mongo.db[form.collection.data]
+        #Naive solution to possible None form submission: set bounds to (1e-6, 1e6)
+        if form.gamma_max.data is None:
+            gamma_max = 1e6
+        else:
+            gamma_max = form.gamma_max.data
+
+        if form.gamma_min.data is None:
+            gamma_min = -1e6
+        else:
+            gamma_min = form.gamma_min.data
+
+        if form.omega_max.data is None:
+            omega_max = 1e6
+        else:
+            omega_max = form.omega_max.data
+
+        if form.omega_min.data is None:
+            omega_min = -1e6
+        else:
+            omega_min = form.omega_min.data
+
+        if form.z_max.data is None:
+            z_max = 1e6
+        else:
+            z_max = form.z_max.data
+        
+        if form.z_min.data is None:
+            z_min = -1e6
+        else:
+            z_min = form.z_min.data
+
+        if form.lambda_z_max.data is None:
+            lambda_z_max = 1e6
+        else:
+            lambda_z_max = form.lambda_z_max.data
+        
+        if form.lambda_z_min.data is None:
+            lambda_z_min = -1e6
+        else:
+            lambda_z_min = form.lambda_z_min.data
+
+        #Query the database (instance of Pymongo Cursor class)
+        cursor = collection.find(
+            {"Parameters.gamma (cs/a)": {$gt: gamma_min, $lt: gamma_max}}, 
+            {"Parameters.omega (cs/a)": {$gt: omega_min, $lt: omega_max}}),
+            {"Parameters.<z>": {$gt: z_min, $lt: z_max}}, 
+            {"Parameters.lambda_z": {$gt: lambda_z_min, $lt: lambda_z_min}})
+
+        #Collect relevant run info from query results
+        runs = []
+        for run in cursor:
+            #Getting upload time of run
+            time = run['_id'].generation_time
+            #Creating a list of dictionaries with relevant info for run
+            params = run['Parameters']
+            display_params = []
+            for key, value in params.items():
+                #Run parameters to be displayed
+                display_params.append([key,value])
+            temp = {"user": run['Meta']['user'], "keywords": run['Meta']['keywords'], "time": time, "params": display_params}
+            runs.append(temp)
+    return render_template('data.html', form=form, runs=runs)
 
 #Function for downlaoding run by id
 @main.route('/download/<collection>/<id>')
