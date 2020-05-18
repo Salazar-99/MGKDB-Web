@@ -7,19 +7,18 @@ Auth
 
 Data
    - Download
-      - Test what response looks like
    - Pagination
-   - Filters
    - Fix Expansion
    - Fix download button dynamic placement
    - Filters
-      - max-min on gamma, omega, z, lambda_z
-      - How to deal with None filter? Use infinities?
+      - Test
+
+Templates
+   - Filter formatting in data.html
+   - Format data cards in data.html
 
 Deployment
-   - Possibly Docker
-   - Potentially host on MIT server (contact Craig)
+   - Docker Images hosted on SPIN
+      - Requires no SSH Tunnel
+      - Would need to attend SPIN workshops
 
-Accessing remote MGKDB
-   - SSH Tunnel for accessing MGKDB on Cori? 
-      - If this doesn't work, set up clone db on different server and update hourly with a watch cursor?
