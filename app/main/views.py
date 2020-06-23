@@ -1,11 +1,11 @@
 import os
-from flask import Flask, Response, render_template, url_for, session, redirect, flash, request
+from flask import Flask, Response, render_template, url_for, session, redirect, flash, request, make_response
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 #Dots used for relative imports
 from . import main
-from .forms import *
-from ..email import *
+from .forms import SignupForm, FilterForm, LoginForm
+from ..email import send_email
 from .. import db, mongo
 from ..models import User
 
@@ -125,10 +125,10 @@ def data():
         set_bounds(form)
         #Query the database (instance of Pymongo Cursor class)
         cursor = collection.find(
-            {"Parameters.gamma (cs/a)": {$gt: gamma_min, $lt: gamma_max}}, 
-            {"Parameters.omega (cs/a)": {$gt: omega_min, $lt: omega_max}}),
-            {"Parameters.<z>": {$gt: z_min, $lt: z_max}}, 
-            {"Parameters.lambda_z": {$gt: lambda_z_min, $lt: lambda_z_min}})
+            {"Parameters.gamma (cs/a)": {"$gt": gamma_min, "$lt": gamma_max}}, 
+            {"Parameters.omega (cs/a)": {"$gt": omega_min, "$lt": omega_max}},
+            {"Parameters.<z>": {"$gt": z_min, "$lt": z_max}}, 
+            {"Parameters.lambda_z": {"$gt": lambda_z_min, "$lt": lambda_z_min}})
         #Collect relevant run info from query results
         runs = []
         for run in cursor:

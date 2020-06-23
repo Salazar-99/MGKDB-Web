@@ -22,20 +22,15 @@ class LoginForm(FlaskForm):
 
 class FilterForm(FlaskForm):
     collection = RadioField('Run Type', choices=[('linear', 'LinearRuns'), ('nonlinear', 'NonlinRuns')])
-    gamma_max = DecimalField(validators=[is_numeric()])
-    gamma_min = DecimalField(validators=[is_numeric()])
-    omega_max = DecimalField(validators=[is_numeric()])
-    omega_min = DecimalField(validators=[is_numeric()])
-    z_max = DecimalField(validators=[is_numeric()])
-    z_min = DecimalField(validators=[is_numeric()])
-    lambda_z_max = DecimalField(validators=[is_numeric()])
-    lambda_z_min = DecimalField(validators=[is_numeric()])
+    gamma_max = DecimalField()
+    gamma_min = DecimalField()
+    omega_max = DecimalField()
+    omega_min = DecimalField()
+    z_max = DecimalField()
+    z_min = DecimalField()
+    lambda_z_max = DecimalField()
+    lambda_z_min = DecimalField()
     submit = SubmitField('Search')
 
-#Checks if field entry is a number of the form XX.XX
-#TODO: Extend acceptable number formats (.XX, XeX)
-def is_numeric(field):
-    #Might need to be str(field_data)
-    if re.match(r'^-?\d+(?:\.\d+)?$', field.data) is None:
-        raise ValidationError('Value must be numeric')  
+
 
