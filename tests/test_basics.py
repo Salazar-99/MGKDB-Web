@@ -21,3 +21,9 @@ class BasicsTestCase(unittest.TestCase):
 
     def test_app_is_testing(self):
         self.assertTrue(current_app.config['TESTING'])
+
+#TODO: Complete this test case
+class EmailTestCase(unittest.TestCase):
+    #Test that email is working correctly
+    def send_email(self):
+        raise NotImplementedError

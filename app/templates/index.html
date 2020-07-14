@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+<link href="static/css/index.css" rel="stylesheet">
 
 {% block title %}Home - {% endblock %}
 
@@ -13,17 +14,112 @@
   {% endfor %}
 </div>
 
-<!--Top of page image and text-->
-<header class="masthead" style="background-color:#3950bf;">
-    <div class="container-fluid h-100">
-      <div class="row h-100 align-items-center">
-        <div class="col-12 text-center">
-          <h1 class="font-weight-dark"><font color="white">Welcome to MGKDB </font></h1>
-          <p class="lead"><font color="white">Open access to fusion simulation data for the research community</font></p>
-        </div>
+  <!--Top of page image and text-->
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-6 pt-5 pb-5" style="background-color: white;">
+        <p><h1 class="font-weight-dark"><font color="black">Welcome to MGKDB </font></h1>
+            <i class="font-weight-light"> The open access Multiscale Gyrokinetic Database</i>
+            <br><br>
+            <p class="lead"><font color="black">Open access to simulation data for the fusion research community</font></p>
+            <p class="lead"><font color="black"> MGKDB is a software ecosystem consisting of a Mongo DB database, command-line tools, and a web application for storing, downloading, analyzing, and interacting with gyrokinetic simulation data produced and uploaded by researchers around the world.  </font> <p></p>
+        </p>
+      </div>
+      <div class="col-sm-6 pt-5 pb-5" style="background-color: white;">
+        <img src="static/images/tokamak.png" class="img-responsive" style="width: 100%;
+        height: auto;">
       </div>
     </div>
-</header>
+  </div>
+</div>
+
+<div class="container">
+<!-- Boxes -->
+<section class="bg-light text-center">
+
+  <!--Mongo DB-->
+  <div class="row justify-content-center">
+    <div class="col-md-8 p-3 pt-5 pb-5 p-md-5 bg-light ">
+      <h3>Mongo DB</h3>
+      <div class="row justify-content-center">
+        <div class="col-md-8 justify-content-center">
+          <p class="lead mb-0 text-md-left">
+            Mongo DB is a non-relational database which allows high levels of flexibility in the structure of stored data. This flexible structure makes the database extensible and uploading data simple. The database is hosted at NERSC and is capable of storage at the terabyte scale.
+          </p>
+        </div>
+      </div>
+      <br>
+      <img class="img-fluid mt-3 mx-auto" src="static/images/mongo.png" alt="MGKDB Web Data" width="1000" height="auto">
+    </div>
+  </div>
+
+  <hr style="border-top: 10px solid white;">
+
+  <!--Command-line Interface-->
+  <div class="row justify-content-center">
+    <div class="col-md-8 pb-5 pt-5 ">
+      <h3>Command-line Interface</h3>
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <p class="lead mb-0 text-md-left">MGKDB provides a command-line interface and a collection of Python scripts for interacting with the database. Users can download, upload, search, and plot quantities of interest. There is also a GUI interface for ease of use.</p>
+        </div>
+      </div>
+      <br>
+      <h5>Examples</h5>
+      <figure class="highlight">
+        <div class="row justify-content-center">
+          <div class="col-md-8">
+            <pre style="white-space: pre;">
+              <code style="white-space: nowrap;">
+                <p class="text-md-left">
+                python3 –i mgkpyinterface.py -A loginpass.pkl <br>
+                python3 mgkdownload.py -A Mymgklogin.pkl  -C collection -D directory <br>
+                python3 mgk_uploader.py -T target_folder -H heat -K keywords
+                </p>
+              </code>
+            </pre>
+          </div>
+        </div>
+      </figure>
+      <br>
+      <a class="btn btn-outline-primary" href="#">Get the code</a>
+    </div>
+  </div>
+  
+  <hr style="border-top: 10px solid white;">
+
+  <!--MGKDB Web-->
+  <div class="row justify-content-center">
+    <div class="col-md-8 pb-5 pt-5 bg-light">
+      <h3>MGKDB Web</h3>
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <p class="lead mb-0 text-md-left">
+            For users that prefer a web-based experience the MGKDB web app provides a way to browse, filter, and download data. Continuing releases will include plotting utilities and an increasing number of filters.
+          </p>
+        </div>
+      </div>
+      <img class="img-fluid mt-3 mx-auto" src="static/images/data.png" alt="MGKDB Web Data">
+      <br><br>
+      <a href="{{ url_for('main.signup') }}" class="btn btn-outline-primary">Sign up</a>
+    </div>
+</section>
+</div>
+
+
+<!--Footer-->
+<footer class="page-footer font-small pt-4" style="background-color: black;">
+  <!-- Footer Links -->
+  <div class="container-fluid text-center text-md-left">
+      <div class="row">
+          <div class="col-md-6 mt-md-0 mt-3">
+              <p><font color="white">Developed by the <a href="#!">MGKDB team</a> at the University of Texas at Austin.</font>
+          </div>
+      </div>
+  </div>
+</footer>
+
+</body>
 <!--Content-->
 
 {% endblock %}

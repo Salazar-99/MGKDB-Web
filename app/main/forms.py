@@ -21,15 +21,16 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Log In')
 
 class FilterForm(FlaskForm):
-    collection = RadioField('Run Type', choices=[('linear', 'LinearRuns'), ('nonlinear', 'NonlinRuns')])
-    gamma_max = DecimalField()
-    gamma_min = DecimalField()
-    omega_max = DecimalField()
-    omega_min = DecimalField()
-    z_max = DecimalField()
-    z_min = DecimalField()
-    lambda_z_max = DecimalField()
-    lambda_z_min = DecimalField()
+    collection = RadioField('Run Type:', choices=[('LinearRuns', 'Linear Runs'), ('NonlinRuns', 'Non-linear Runs')])
+    #id corresponds to actual name of field in the db, used to generate filters
+    gamma_max = DecimalField(label="gamma_max", id="QoI.gamma(cs/a)")
+    gamma_min = DecimalField(label="gamma_min", id="QoI.gamma(cs/a)")
+    omega_max = DecimalField(label="omega_max", id="QoI.omega(cs/a)")
+    omega_min = DecimalField(label="omega_min", id="QoI.omega(cs/a)")
+    z_max = DecimalField(label="z_max", id="QoI.<z>")
+    z_min = DecimalField(label="z_min", id="QoI.<z>")
+    lambda_z_max = DecimalField(label="lambda_z_max", id="QoI.lambda_z")
+    lambda_z_min = DecimalField(label="lambda_z_min", id="QoI.lambda_z")
     submit = SubmitField('Search')
 
 

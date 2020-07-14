@@ -1,5 +1,5 @@
 import os
-from flask import Flask, Response, render_template, url_for, session, redirect, flash, request, make_response
+from flask import Flask, Response, render_template, url_for, session, redirect, flash, request, make_response, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 #Dots used for relative imports
@@ -7,6 +7,7 @@ from . import main
 from .forms import SignupForm, FilterForm, LoginForm
 from ..email import send_email
 from .. import db, mongo
+import gridfs
 from ..models import User
 
 #Home page
@@ -97,7 +98,7 @@ def verify(token):
 @main.route('/approve/<email>')
 def approve(email):
     #Change "approved" column in database to True
-    user = User.query.filter_by(email=email).update(dict(approved=True))
+    User.query.filter_by(email=email).update(dict(approved=True))
     db.session.commit()    
     return render_template('approve.html')
 
@@ -105,30 +106,30 @@ def approve(email):
 @main.route('/deny/<email>')
 def deny(email):
     #Delete user from database
-    user = User.query.filter_by(email=email).delete()
+    User.query.filter_by(email=email).delete()
     db.session.commit()
     return render_template('deny.html')
 
-#@auth.before_app_request
-#def before_request():
-    #if current_user.is_authenticated and not current_user.approved:
-        #flash('Your account has not been approved yet')
-        #return redirect(url_for('main.index'))
+#Prevent unapproved users from accessing data
+'''@auth.before_app_request
+def before_request():
+    if current_user.is_authenticated and not current_user.approved:
+        flash('Your account has not been approved yet')
+        return redirect(url_for('main.index'))
+'''
 
 #Data page
-@main.route('/data', methods=['GET'])
+@main.route('/data', methods=['GET', 'POST'])
 @login_required
 def data():
     form = FilterForm()
     if form.validate_on_submit:
-        collection = mongo.db[form.collection.data]
-        set_bounds(form)
-        #Query the database (instance of Pymongo Cursor class)
-        cursor = collection.find(
-            {"Parameters.gamma (cs/a)": {"$gt": gamma_min, "$lt": gamma_max}}, 
-            {"Parameters.omega (cs/a)": {"$gt": omega_min, "$lt": omega_max}},
-            {"Parameters.<z>": {"$gt": z_min, "$lt": z_max}}, 
-            {"Parameters.lambda_z": {"$gt": lambda_z_min, "$lt": lambda_z_min}})
+        collection_name = form.collection.data
+        collection = mongo.db[collection_name]
+        #Build dictionary of filters based on user form inputs
+        filters = get_filters(form)
+        #Query the database (returns instance of Pymongo Cursor class)
+        cursor = collection.find(filters)
         #Collect relevant run info from query results
         runs = []
         for run in cursor:
@@ -140,58 +141,40 @@ def data():
             for key, value in params.items():
                 #Run parameters to be displayed
                 display_params.append([key,value])
-            temp = {"user": run['Meta']['user'], "keywords": run['Meta']['keywords'], "time": time, "params": display_params}
+            temp = {"id": run['_id'], "user": run['Meta']['user'], "keywords": run['Meta']['keywords'], 
+                    "time": time, "params": display_params}
             runs.append(temp)
-    return render_template('data.html', form=form, runs=runs)
+    return render_template('data.html', form=form, runs=runs, collection_name=collection_name)
 
-#Function for downlaoding run by id
-@main.route('/download/<collection>/<id>')
-def download_run(collection, id):
+#Function for handling parameter filter values
+def get_filters(form):
+    filters = {}
+    for field in form:
+        #Ignore empty fields
+        if field.data not in [None, ""]:
+            #Check if field is a max or min filter (ignores collection, submit, token)
+            if field.label.text.endswith("max"):
+                filters.update({field.id: {"$lt": float(field.data)}})
+            elif field.label.text.endswith("min"):
+                #Check if a filter already exists to prevent overwriting
+                if filters[field.id] is not None:
+                    filters[field.id].update({"$gt": float(field.data)})
+                else:
+                    filters.update({field.id: {"$gt": float(field.data)}})
+    print(filters)
+    return filters
+
+#Route for downloading run by id
+@main.route('/download/<collection_name>/<id>', methods=['GET', 'POST'])
+def download(collection_name, id):
     fs = gridfs.GridFSBucket(mongo.db)
-    #Get run by id
-    run = collection.find_one({"_id": id})
-    #Create response from run
-    response = make_response(run.read())
-    return response   
-
-#Naive solution to possible None form submission: set bounds to (1e-6, 1e6)
-def set_bounds(form):
-    if form.gamma_max.data is None:
-        gamma_max = 1e6
-    else:
-        gamma_max = form.gamma_max.data
-
-    if form.gamma_min.data is None:
-        gamma_min = -1e6
-    else:
-        gamma_min = form.gamma_min.data
-
-    if form.omega_max.data is None:
-        omega_max = 1e6
-    else:
-        omega_max = form.omega_max.data
-
-    if form.omega_min.data is None:
-        omega_min = -1e6
-    else:
-        omega_min = form.omega_min.data
-
-    if form.z_max.data is None:
-        z_max = 1e6
-    else:
-        z_max = form.z_max.data
-
-    if form.z_min.data is None:
-        z_min = -1e6
-    else:
-        z_min = form.z_min.data
-
-    if form.lambda_z_max.data is None:
-        lambda_z_max = 1e6
-    else:
-        lambda_z_max = form.lambda_z_max.data
-
-    if form.lambda_z_min.data is None:
-        lambda_z_min = -1e6
-    else:
-        lambda_z_min = form.lambda_z_min.data
+    with open('download','wb+') as f:   
+        fs.download_to_stream(id, f)
+    return send_file('download')
+    '''query = {'_id': id}
+    collection = mongo.db[collection_name]
+    cursor = collection.find()
+    for run in cursor:
+        data = make_response(run)
+    return send_file(data, as_attachment=True, attachment_filename=str(id))
+    '''

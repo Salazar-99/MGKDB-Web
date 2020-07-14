@@ -1,13 +1,16 @@
 import os
+from dotenv import load_dotenv
+
+#Load environment variables from .env file
+load_dotenv()
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or '6.626x10-34'
+    SECRET_KEY = os.environ.get('SECRET_KEY')
     MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.googlemail.com')
     MAIL_PORT = int(os.environ.get('MAIL_PORT', '587'))
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
-    MAIL_USERNAME = os.environ.get('MAIL_USERNAME') or 'web.mgkdb@gmail.com'
-    #TODO: Update password and store all this stuff in env file 
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD') or 'mgkdbweb'
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_SUBJECT_PREFIX = '[MGKDB Web] '
     MAIL_SENDER = 'MGKDB Web Admin <web.mgkdb@gmail.com>'
     ADMIN = os.environ.get('ADMIN')
@@ -20,7 +23,7 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://test:test@localhost/users_dev'
-    MONGO_URI = "mongodb://localhost:27018/mgk_fusion"
+    MONGO_URI = "mongodb://localhost:27017/mgk_fusion"
 
 class TestingConfig(Config):
     DEBUG = True
@@ -29,7 +32,8 @@ class TestingConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://test:test@localhost/users_prod'
+    #Configure during deployment
+    #SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://test:test@localhost/users_prod'
 
 config = {
     'development': DevelopmentConfig,

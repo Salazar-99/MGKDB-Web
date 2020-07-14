@@ -1,5 +1,6 @@
 og_downloader.py
 notes.txt
+.env
 mgkdb-web-venv/
 __pycache__/
 *.pyo

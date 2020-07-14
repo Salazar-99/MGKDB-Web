@@ -1,43 +1,56 @@
 {% extends "base.html" %}
+{% from 'bootstrap/form.html' import render_form %}
 
 {% block title %}Data - {% endblock %}
 
 {% block page_content %}
-<div class="container-fluid">
-  <div class="row">
-    <!--Search Filters-->
-    <!--TODO: Add formatting to the form-->
-    {{ render_form(form) }}
-    <!--Data Listings-->
-    <div class="col-sm-10">
-      <div class="container-fluid"><br>
-        <center>
-          <h1 class="font-weight-light">
-            Browse Data
-          </h1>
-        </center><br>
-        <div class="row align-items-center justify-content-center">
-          <div class="col-md-10">
-            <div class="list-group align-items-stretch">
-              <!--Individual Data Cards-->
-              {% for run in runs %}
-              <a href="#" class="list-group-item list-group-item-action" style="border-radius: 15px;">
-                <!--Button used to expand params-->
-                <button data-toggle="collapse" data-target="#params" type="button" class="btn btn-light">+</button>&nbsp;&nbsp;
-                <!--Filling in relevant info for each run-->
-                <b>User:</b> {{ run['user']|capitalize }} 
-                <b>Keywords:</b> {{ run['keywords'] }}
-                <b>Upload Date:</b> {{ run['time'] }} &nbsp;&nbsp; 
-                <button type="button" class="btn btn-dark">Download</button>
-                <!--Collapsible div that displays run parameters-->
-                <div id="params" class="collapse"><br>
-                  {% for param in run['params']%} 
-                    {{ param[0] }}: {{ param[1] }}<br>
-                  {% endfor %}
-                </div>
-              </a><br>
-              {% endfor %}
-            </div>
+<!--TODO: Make two rows, one for filters one for data-->
+<div class="container">
+  <div class="row pt-5">
+    <!--Filters-->
+    <div class="col-lg-2">
+      <h2 class="font-weight-light">
+        Filters
+      </h2>
+      <br>
+      {{ render_form(form) }}
+    </div>
+    <!--Data-->
+    <div class="col-lg-10">
+      <center>
+        <h1 class="font-weight-light">
+          Data
+        </h1>
+      </center><br>
+      <div class="row justify-content-center">
+        <div class="col-md-10">
+          <div class="list-group ">
+            <!--Individual Data Cards-->
+            {% for run in runs %}
+            <div class="list-group-item list-group-item-action" style="border-radius: 15px;">
+              <!--Button used to expand params-->
+              <a class="btn btn-primary" data-toggle="collapse" href="#{{ loop.index }}" role="button">
+                +
+              </a>
+              <!--Relevant info for each run-->
+              <b>User:</b> {{ run['user']|capitalize }} 
+              <b>Keywords:</b> {{ run['keywords'] }}
+              <b>Upload Date:</b> {{ run['time'] }} 
+              <a type="button" class="btn btn-dark" href={{ url_for('main.download',
+                                                                          collection_name=collection_name,  
+                                                                          id=run['id'],
+                                                                          _external=True) }}>
+              V
+              </a>
+              <!--TODO: Fix this so that each button only expands its own box-->
+              <!--Collapsible div that displays run parameters-->
+              <div class="collapse" id="{{ loop.index }}"><br>
+                {% for param in run['params'] %} 
+                  {{ param[0] }}: {{ param[1] }}<br>
+                {% endfor %}
+              </div>
+            </div><br>
+            {% endfor %}
           </div>
         </div>
       </div>
