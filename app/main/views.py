@@ -2,7 +2,10 @@ import os
 from flask import Flask, Response, render_template, url_for, session, redirect, flash, request, make_response, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-#Dots used for relative imports
+from bson.objectid import ObjectId
+import pickle
+from io import BytesIO
+from zipfile import ZipFile
 from . import main
 from .forms import SignupForm, FilterForm, LoginForm
 from ..email import send_email
@@ -110,14 +113,6 @@ def deny(email):
     db.session.commit()
     return render_template('deny.html')
 
-#Prevent unapproved users from accessing data
-'''@auth.before_app_request
-def before_request():
-    if current_user.is_authenticated and not current_user.approved:
-        flash('Your account has not been approved yet')
-        return redirect(url_for('main.index'))
-'''
-
 #Data page
 @main.route('/data', methods=['GET', 'POST'])
 @login_required
@@ -146,7 +141,7 @@ def data():
             runs.append(temp)
     return render_template('data.html', form=form, runs=runs, collection_name=collection_name)
 
-#Function for handling parameter filter values
+#Function for parsing filter values
 def get_filters(form):
     filters = {}
     for field in form:
@@ -161,20 +156,35 @@ def get_filters(form):
                     filters[field.id].update({"$gt": float(field.data)})
                 else:
                     filters.update({field.id: {"$gt": float(field.data)}})
-    print(filters)
     return filters
 
 #Route for downloading run by id
-@main.route('/download/<collection_name>/<id>', methods=['GET', 'POST'])
+@main.route('/download/<collection_name>/<id>', methods=['GET'])
 def download(collection_name, id):
+    #Instantiate fs object
     fs = gridfs.GridFSBucket(mongo.db)
-    with open('download','wb+') as f:   
-        fs.download_to_stream(id, f)
-    return send_file('download')
-    '''query = {'_id': id}
+    #Set collection
     collection = mongo.db[collection_name]
-    cursor = collection.find()
-    for run in cursor:
-        data = make_response(run)
-    return send_file(data, as_attachment=True, attachment_filename=str(id))
-    '''
+    #Find metadata for run
+    record = collection.find_one({"_id": id})
+    #Collect 'files' data in place into record
+    for key, val in record['Files'].items():
+        if val != "None":
+            with open('temp','wb+') as f:
+                fs.download_to_stream(val, temp, session=None)
+            record['Files'][key] = str(val)
+    #Collect 'diagnostics' data
+    diagnostics = {}
+    for key, val in record['Diagnostics'].items():
+        if isinstance(val, ObjectId):
+            record['Diagnostics'][key] = str(val)
+            diagnostics[key] = binary_to_numpy(fs.get(val).read())
+    #Combine all data into zip folder
+    memory_file = BytesIO()
+    #for file in [records, diagnostics]:
+
+    return send_file(data, attachment_filename=f'{id}.zip', as_attachment=True)
+
+#Utility function for unpickling numpy arrays (format of stored data)
+def binary_to_numpy(x):
+    return pickle.loads(x)

@@ -4,7 +4,6 @@
 {% block title %}Data - {% endblock %}
 
 {% block page_content %}
-<!--TODO: Make two rows, one for filters one for data-->
 <div class="container">
   <div class="row pt-5">
     <!--Filters-->
@@ -24,30 +23,41 @@
       </center><br>
       <div class="row justify-content-center">
         <div class="col-md-10">
-          <div class="list-group ">
+          <div class="list-group">
             <!--Individual Data Cards-->
             {% for run in runs %}
             <div class="list-group-item list-group-item-action" style="border-radius: 15px;">
-              <!--Button used to expand params-->
-              <a class="btn btn-primary" data-toggle="collapse" href="#{{ loop.index }}" role="button">
-                +
-              </a>
-              <!--Relevant info for each run-->
-              <b>User:</b> {{ run['user']|capitalize }} 
-              <b>Keywords:</b> {{ run['keywords'] }}
-              <b>Upload Date:</b> {{ run['time'] }} 
-              <a type="button" class="btn btn-dark" href={{ url_for('main.download',
-                                                                          collection_name=collection_name,  
-                                                                          id=run['id'],
-                                                                          _external=True) }}>
-              V
-              </a>
-              <!--TODO: Fix this so that each button only expands its own box-->
+              <div class="container no-gutters">
+                <div class="row">
+                  <!--Button used to expand params-->
+                  <div class="col-1">
+                    <a class="btn btn-primary" data-toggle="collapse" href="#content{{ loop.index }}" role="button">
+                      +
+                    </a>
+                  </div>
+                  <div class="col-10">
+                    <!--Relevant info for each run-->
+                    <b>Run ID: </b> {{ run['id']}} <br>
+                    <b>User: </b> {{ run['user']|capitalize }} <br>
+                    <b>Upload Date: </b> {{ run['time'] }} <br>
+                    <b>Keywords: </b> {{ run['keywords'] }}
+                  </div>
+                  <div class="col-1">
+                    <!--Download button-->
+                    <a type="button" class="btn btn-dark" href={{ url_for('main.download', collection_name=collection_name,  id=run['id'], _external=True) }}>↓
+                    </a>
+                  </div>
+                </div>
+              </div>
               <!--Collapsible div that displays run parameters-->
-              <div class="collapse" id="{{ loop.index }}"><br>
-                {% for param in run['params'] %} 
-                  {{ param[0] }}: {{ param[1] }}<br>
-                {% endfor %}
+              <div class="collapse" id="content{{ loop.index }}">
+                <br>
+                <div class="card card-body">
+                  <b> Parameters </b>
+                  {% for param in run['params'] %} 
+                    {{ param[0] }}: {{ param[1] }} <br>
+                  {% endfor %}  
+                </div>
               </div>
             </div><br>
             {% endfor %}
