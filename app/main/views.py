@@ -129,7 +129,7 @@ def data():
         runs = []
         for run in cursor:
             #Getting upload time of run
-            time = run['_id'].generation_time
+            time = run['_id'].generation_time.date()
             #Creating a list of dictionaries with relevant info for run
             params = run['Parameters']
             display_params = []
@@ -152,9 +152,9 @@ def get_filters(form):
                 filters.update({field.id: {"$lt": float(field.data)}})
             elif field.label.text.endswith("min"):
                 #Check if a filter already exists to prevent overwriting
-                if filters[field.id] is not None:
+                try:
                     filters[field.id].update({"$gt": float(field.data)})
-                else:
+                except KeyError:
                     filters.update({field.id: {"$gt": float(field.data)}})
     return filters
 
@@ -167,11 +167,13 @@ def download(collection_name, id):
     collection = mongo.db[collection_name]
     #Find metadata for run
     record = collection.find_one({"_id": id})
+    summary = json.dumps(record)
     #Collect 'files' data in place into record
     for key, val in record['Files'].items():
         if val != "None":
-            with open('temp','wb+') as f:
-                fs.download_to_stream(val, temp, session=None)
+            filename = db.fs.files.find_one(val)['filename']
+            with open('filename','wb+') as f:
+                fs.download_to_stream(val, f, session=None)
             record['Files'][key] = str(val)
     #Collect 'diagnostics' data
     diagnostics = {}
@@ -180,10 +182,10 @@ def download(collection_name, id):
             record['Diagnostics'][key] = str(val)
             diagnostics[key] = binary_to_numpy(fs.get(val).read())
     #Combine all data into zip folder
-    memory_file = BytesIO()
+    #memory_file = BytesIO()
     #for file in [records, diagnostics]:
 
-    return send_file(data, attachment_filename=f'{id}.zip', as_attachment=True)
+    #return send_file(data, attachment_filename=f'{id}.zip', as_attachment=True)
 
 #Utility function for unpickling numpy arrays (format of stored data)
 def binary_to_numpy(x):
