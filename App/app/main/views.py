@@ -167,15 +167,16 @@ def download(collection_name, id):
     collection = mongo.db[collection_name]
     #Find metadata for run
     record = collection.find_one({"_id": id})
+    #Save metadata as summary
     summary = json.dumps(record)
-    #Collect 'files' data in place into record
+    #Collect 'Files' data in place into record
     for key, val in record['Files'].items():
         if val != "None":
             filename = db.fs.files.find_one(val)['filename']
             with open('filename','wb+') as f:
                 fs.download_to_stream(val, f, session=None)
             record['Files'][key] = str(val)
-    #Collect 'diagnostics' data
+    #Collect 'Diagnostics' data
     diagnostics = {}
     for key, val in record['Diagnostics'].items():
         if isinstance(val, ObjectId):
