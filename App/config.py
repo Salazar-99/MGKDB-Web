@@ -22,7 +22,7 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    #TODO: Change this URI to suite docker
+    #TODO: Change this URI to suit docker
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://test:test@localhost/users_dev'
     MONGO_URI = "mongodb://localhost:27017/mgk_fusion"
 

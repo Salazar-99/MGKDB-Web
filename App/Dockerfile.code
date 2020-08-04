@@ -1,4 +1,0 @@
-FROM server:latest
-
-COPY ./MGKDB-Web /app
-COPY ./requirements.txt /app
