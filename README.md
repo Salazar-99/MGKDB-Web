@@ -2,7 +2,6 @@
 
 Some instructions for myself at this point in the dev process
 
-
 To set up the dev environment navigate to ```App/``` and build the image
 
 ```docker build -t mgkdb:latest .```

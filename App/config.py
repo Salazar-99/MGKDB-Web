@@ -22,14 +22,10 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    #TODO: Change this URI to suit docker
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://test:test@localhost/users_dev'
+    #Connects to mysql container
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    #TODO: Build solution to connect to remote db
     MONGO_URI = "mongodb://localhost:27017/mgk_fusion"
-
-class TestingConfig(Config):
-    DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://test:test@localhost/users_test'
-    MONGO_URI = "mongodb://localhost:27018/mgk_fusion"
 
 class ProductionConfig(Config):
     DEBUG = False
@@ -38,7 +34,6 @@ class ProductionConfig(Config):
 
 config = {
     'development': DevelopmentConfig,
-    'testing': TestingConfig,
     'production': ProductionConfig,
     'default': DevelopmentConfig
 }

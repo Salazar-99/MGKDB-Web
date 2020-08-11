@@ -1,6 +1,9 @@
 #Base image
 FROM python:3.8-slim-buster
 
+#Get SSH
+RUN apt-get update && apt-get install -y openssh-server
+
 #Environment variables
 ENV FLASK_APP mgkdb_web.py
 ENV FLASK_DEBUG 1
@@ -16,7 +19,6 @@ RUN venv/bin/pip install -r requirements.txt
 
 #Copy over code
 COPY app app
-COPY migrations migrations
 COPY mgkdb_web.py config.py boot.sh .env ./
 
 #Start app

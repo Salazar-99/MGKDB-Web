@@ -1,32 +1,27 @@
-version: '2'
-services: 
-    mysql:
-        container_name: mysql
-        image: registry.nersc.gov/m2116/mysql:latest
-        volumes: 
-            - data:/var/lib/mysql
-        environment: 
-            MYSQL_ROOT_PASSWORD: pw
-            TZ: 'America/Chicago'
+#For development
+version: '3'
+services:
     app:
         container_name: app
-        image: registry.nersc.gov/m2116/app:latest
-        stdin_open: true
-        tty: true
-        environment: 
-            FLASK_APP: mgkdb_web.py
-            FLASK_DEBUG: 1
-            TZ: 'America/Chicago'
-        volumes:
-            - "./App/MGKDB-Web:/app"
+        image: mgkdb:latest
+        expose:
+            - 5000
         links:
-            - mysql 
-        ports: 
-            - 5000:5000
-        entrypoint: ["flask", "run", "--host=0.0.0.0"]
-    #nginx
-
+            - mysql:dbserver
+    mysql:
+        container_name: db
+        image: mysql:latest
+        volumes: 
+            - db-data:/var/lib/mysql
+        env_file: DB/.env-mysql
+        cap_add:
+            - SYS_NICE
+    nginx:
+        container_name: nginx
+        image: nginx:latest
+        ports:
+            - 1337:8081
+        depends_on:
+            - app
 volumes:
-    data: 
-        driver: local
-    
+    db-data:
