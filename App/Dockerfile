@@ -21,6 +21,11 @@ RUN venv/bin/pip install -r requirements.txt
 COPY app app
 COPY mgkdb_web.py config.py boot.sh .env ./
 
+#SSH Tunnel for MongoDB
+COPY sshproxy.sh ./
+RUN ./sshproxy.sh
+RUN ssh -i .ssh/nersc -f gsalazar@cori.nersc.gov -L 2222:mongodb03.nersc.gov:27017 -N
+
 #Start app
 EXPOSE 5000
 ENTRYPOINT [ "./boot.sh" ]

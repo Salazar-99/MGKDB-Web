@@ -4,8 +4,8 @@ services:
     app:
         container_name: app
         image: mgkdb:latest
-        expose:
-            - 5000
+        ports:
+            - "5000:5000"
         links:
             - mysql:dbserver
     mysql:
@@ -16,12 +16,12 @@ services:
         env_file: DB/.env-mysql
         cap_add:
             - SYS_NICE
-    nginx:
-        container_name: nginx
-        image: nginx:latest
-        ports:
-            - 1337:8081
-        depends_on:
-            - app
+    # nginx:
+    #     container_name: nginx
+    #     image: nginx:latest
+    #     ports:
+    #         - 1337:8081
+    #     depends_on:
+    #         - app
 volumes:
     db-data:

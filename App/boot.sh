@@ -17,9 +17,8 @@ while true; do
     sleep 1
 done
 
-#TODO: Figure out identity file to make this work
 #Port forwarding for accessing MGKDB on Cori via localhost
-ssh -i .ssh/nersc -f gsalazar@cori.nersc.gov -L 2222:mongodb03.nersc.gov:27017 -N
+#ssh -i .ssh/nersc -f gsalazar@cori.nersc.gov -L 2222:mongodb03.nersc.gov:27017 -N
 
 #Run web server
-exec gunicorn -b 0.0.0.0:5000 --access-logfile - --error-logfile - mgkdb_web:app
+exec gunicorn -w 2 -b 0.0.0.0:5000 --access-logfile - --error-logfile - mgkdb_web:app

@@ -24,8 +24,8 @@ class DevelopmentConfig(Config):
     DEBUG = True
     #Connects to mysql container
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
-    #TODO: Build solution to connect to remote db
-    MONGO_URI = "mongodb://localhost:27017/mgk_fusion"
+    #SSH tunnel remote to localhost and connect locally
+    MONGO_URI = os.environ.get('MONGO_URL')
 
 class ProductionConfig(Config):
     DEBUG = False
