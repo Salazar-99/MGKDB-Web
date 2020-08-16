@@ -118,27 +118,51 @@ def deny(email):
 @login_required
 def data():
     form = FilterForm()
+    fs = gridfs.GridFSBucket(mongo.db)
     if form.validate_on_submit:
         collection_name = form.collection.data
         collection = mongo.db[collection_name]
-        #Build dictionary of filters based on user form inputs
-        filters = get_filters(form)
-        #Query the database (returns instance of Pymongo Cursor class)
-        cursor = collection.find(filters)
-        #Collect relevant run info from query results
-        runs = []
-        for run in cursor:
-            #Getting upload time of run
-            time = run['_id'].generation_time.date()
-            #Creating a list of dictionaries with relevant info for run
-            params = run['Parameters']
-            display_params = []
-            for key, value in params.items():
-                #Run parameters to be displayed
-                display_params.append([key,value])
-            temp = {"id": run['_id'], "user": run['Meta']['user'], "keywords": run['Meta']['keywords'], 
-                    "time": time, "params": display_params}
-            runs.append(temp)
+        #Search by ID
+        if form.id.data not in ['', None]:
+            result = collection.find({"_id": form.id.data})
+            if result is None:
+                flash('Run ID returned no results, try again')
+                return render_template('data.html', form=form, runs=runs, collection_name=collection_name)
+            else:
+                run = []
+                #Getting upload time of run
+                time = run['_id'].generation_time.date()
+                #Creating a list of dictionaries with relevant info for run
+                params = run['Parameters']
+                display_params = []
+                for key, value in params.items():
+                    #Run parameters to be displayed
+                    display_params.append([key,value])
+                size = fs.chunks.find({"id": id}).count() * 255 / 1024
+                run = {"id": run['_id'], "user": run['Meta']['user'], "keywords": run['Meta']['keywords'], 
+                        "time": time, "params": display_params, "size": size}
+                runs.append(run)
+        #Search with filters
+        else:
+            #Build dictionary of filters based on user form inputs
+            filters = get_filters(form)
+            #Query the database (newest to oldest)
+            cursor = collection.find(filters).sort([['_id', -1]])
+            #Collect relevant run info from query results
+            runs = []
+            for run in cursor:
+                #Getting upload time of run
+                time = run['_id'].generation_time.date()
+                size = fs.chunks.find({"id": run['_id']}).count() * 255 / 1024
+                #Creating a list of dictionaries with relevant info for run
+                params = run['Parameters']
+                display_params = []
+                for key, value in params.items():
+                    #Run parameters to be displayed
+                    display_params.append([key,value])
+                temp = {"id": run['_id'], "user": run['Meta']['user'], "keywords": run['Meta']['keywords'], 
+                        "time": time, "params": display_params, "size": size}
+                runs.append(temp)
     return render_template('data.html', form=form, runs=runs, collection_name=collection_name)
 
 #Function for parsing filter values
@@ -169,19 +193,25 @@ def download(collection_name, id):
     record = collection.find_one({"_id": id})
     #Save metadata as summary
     summary = json.dumps(record)
-    #Collect 'Files' data in place into record
+    #Save 'Files'
     for key, val in record['Files'].items():
         if val != "None":
             filename = db.fs.files.find_one(val)['filename']
             with open('filename','wb+') as f:
                 fs.download_to_stream(val, f, session=None)
             record['Files'][key] = str(val)
-    #Collect 'Diagnostics' data
+    #Save 'Diagnostics'
     diagnostics = {}
     for key, val in record['Diagnostics'].items():
         if isinstance(val, ObjectId):
             record['Diagnostics'][key] = str(val)
             diagnostics[key] = binary_to_numpy(fs.get(val).read())
+    #Save 'Plots'
+    for key,val in record['Plots'].items():
+            with open(os.path.join(path, str(record['_id']) + '_' +key+
+                                   record['Meta']['run_suffix']+'.png'), "wb") as imageFile:
+                decoded = base64.decodebytes(val.encode('utf-8'))
+                imageFile.write(decoded)
     #Combine all data into zip folder
     #memory_file = BytesIO()
     #for file in [records, diagnostics]:

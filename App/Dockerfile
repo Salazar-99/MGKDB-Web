@@ -2,7 +2,7 @@
 FROM python:3.8-slim-buster
 
 #Get SSH
-RUN apt-get update && apt-get install -y openssh-server
+RUN apt-get update && apt-get install -y openssh-server curl nano
 
 #Environment variables
 ENV FLASK_APP mgkdb_web.py
@@ -22,9 +22,11 @@ COPY app app
 COPY mgkdb_web.py config.py boot.sh .env ./
 
 #SSH Tunnel for MongoDB
+RUN mkdir /root/.ssh/
 COPY sshproxy.sh ./
-RUN ./sshproxy.sh
-RUN ssh -i .ssh/nersc -f gsalazar@cori.nersc.gov -L 2222:mongodb03.nersc.gov:27017 -N
+#Open interactive shell to issue these commands
+#RUN ./sshproxy.sh -u gsalazar
+#RUN ssh -4 -i .ssh/nersc -f gsalazar@cori.nersc.gov -L 27017:mongodb03.nersc.gov:27017 -N
 
 #Start app
 EXPOSE 5000
