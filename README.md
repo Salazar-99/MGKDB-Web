@@ -2,12 +2,20 @@
 
 Some instructions for myself at this point in the dev process
 
-To set up the dev environment navigate to ```App/``` and build the image
+To run the app navigate to top level directory and run
 
-```docker build -t mgkdb:latest .```
+```docker-compose up```
 
-Then run the environment
+In order for the App container to connect to the remote DB an ssh tunnel has to be established. Once the container is up, access it via
 
-```docker run --name mgkdb -d -p 80:80 mgkdb```
+```docker exec -it app /bin/bash```
 
-The app is then accessible at ```127.0.0.1``` due to the port forwarding configured
+Secure a 24 hour ssh key by running 
+
+```./sshproxy -u gsalazar```
+
+Map local port 27017 to remote db by running
+
+```ssh -4 -i .ssh/nersc -f gsalazar@cori.nersc.gov -L 27017:mongodb03.nersc.gov:27017 -N```
+
+Ensure this is the port being used in the ```MONGO_URL``` variable stored in the ```.env``` file.
