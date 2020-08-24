@@ -118,30 +118,30 @@ def deny(email):
 @login_required
 def data():
     form = FilterForm()
-    fs = gridfs.GridFSBucket(mongo.db)
     if form.validate_on_submit:
         collection_name = form.collection.data
         collection = mongo.db[collection_name]
         #Search by ID
         if form.id.data not in ['', None]:
-            result = collection.find({"_id": form.id.data})
+            result = collection.find({"_id": ObjectId(form.id.data)})
             if result is None:
                 flash('Run ID returned no results, try again')
                 return render_template('data.html', form=form, runs=runs, collection_name=collection_name)
             else:
-                run = []
-                #Getting upload time of run
-                time = run['_id'].generation_time.date()
-                #Creating a list of dictionaries with relevant info for run
-                params = run['Parameters']
-                display_params = []
-                for key, value in params.items():
-                    #Run parameters to be displayed
-                    display_params.append([key,value])
-                size = fs.chunks.find({"id": id}).count() * 255 / 1024
-                run = {"id": run['_id'], "user": run['Meta']['user'], "keywords": run['Meta']['keywords'], 
-                        "time": time, "params": display_params, "size": size}
-                runs.append(run)
+                runs = []
+                #Should just be one result, keeping it consistent for rendering
+                for run in result:
+                    #Getting upload time of run
+                    time = run['_id'].generation_time.date()
+                    #Creating a list of dictionaries with relevant info for run
+                    params = run['gyrokinetics']['code']['parameters']
+                    display_params = []
+                    for key, value in params.items():
+                        #Run parameters to be displayed
+                        display_params.append([key,value])
+                    temp = {"id": run['_id'], "user": run['Meta']['user'], "keywords": run['Meta']['keywords'], 
+                            "time": time, "params": display_params}
+                    runs.append(temp)
         #Search with filters
         else:
             #Build dictionary of filters based on user form inputs
@@ -153,15 +153,14 @@ def data():
             for run in cursor:
                 #Getting upload time of run
                 time = run['_id'].generation_time.date()
-                size = fs.chunks.find({"id": run['_id']}).count() * 255 / 1024
                 #Creating a list of dictionaries with relevant info for run
-                params = run['Parameters']
+                params = run['gyrokinetics']['code']['parameters']
                 display_params = []
                 for key, value in params.items():
                     #Run parameters to be displayed
                     display_params.append([key,value])
                 temp = {"id": run['_id'], "user": run['Meta']['user'], "keywords": run['Meta']['keywords'], 
-                        "time": time, "params": display_params, "size": size}
+                        "time": time, "params": display_params}
                 runs.append(temp)
     return render_template('data.html', form=form, runs=runs, collection_name=collection_name)
 
