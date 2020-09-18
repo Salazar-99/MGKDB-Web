@@ -7,7 +7,7 @@ class SignupForm(FlaskForm):
     first_name = StringField('First Name', validators=[DataRequired()])
     last_name = StringField('Last Name', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired(), Length(min=6, max=12)])
     verify_password = PasswordField('Verify Password', validators=[DataRequired()])
     role = RadioField('Role', choices=[('researcher', 'Researcher'), ('student', 'Student'), ('other', 'Other')])
     reason = StringField('Reason For Requesting An Account', 
@@ -21,7 +21,7 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Log In')
 
 class FilterForm(FlaskForm):
-    collection = RadioField('Run Type:', choices=[('LinearRuns', 'Linear Runs'), ('NonlinRuns', 'Non-linear Runs')])
+    collection = RadioField('Run Type:', choices=[('LinearRuns', 'Linear Runs'), ('NonlinRuns', 'Non-linear Runs')], validators=[DataRequired()])
     id = StringField('Run ID', id='id')
     #id corresponds to actual name of field in the db, used to generate filters
     gamma_max = DecimalField(label="gamma_max", id="QoI.gamma(cs/a)")

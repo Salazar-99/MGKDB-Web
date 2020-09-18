@@ -4,6 +4,8 @@ services:
     app:
         container_name: app
         image: mgkdb:latest
+        volumes:
+            - ./App:/app/
         ports:
             - "5000:5000"
         links:

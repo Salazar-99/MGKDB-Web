@@ -4,6 +4,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 import pickle
+import json
 from io import BytesIO
 from zipfile import ZipFile
 from . import main
@@ -12,6 +13,12 @@ from ..email import send_email
 from .. import db, mongo
 import gridfs
 from ..models import User
+from flask_paginate import Pagination, get_page_parameter
+from io import BytesIO
+import base64
+from PIL import Image
+import datetime
+import zipfile
 
 #Home page
 @main.route('/')
@@ -119,6 +126,7 @@ def deny(email):
 def data():
     form = FilterForm()
     if form.validate_on_submit:
+        #A collection must always be specified
         collection_name = form.collection.data
         collection = mongo.db[collection_name]
         #Search by ID
@@ -126,44 +134,69 @@ def data():
             result = collection.find({"_id": ObjectId(form.id.data)})
             if result is None:
                 flash('Run ID returned no results, try again')
-                return render_template('data.html', form=form, runs=runs, collection_name=collection_name)
+                return render_template('data.html', form=form, runs=None, collection_name=collection_name)
             else:
                 runs = []
-                #Should just be one result, keeping it consistent for rendering
+                #Should just be one result, keeping loop for consistency in rendering
                 for run in result:
                     #Getting upload time of run
                     time = run['_id'].generation_time.date()
-                    #Creating a list of dictionaries with relevant info for run
+                    #Collecting params
                     params = run['gyrokinetics']['code']['parameters']
                     display_params = []
                     for key, value in params.items():
-                        #Run parameters to be displayed
                         display_params.append([key,value])
+                    #Collecting plots
+                    plots = run['Plots']
+                    plot_names = []
+                    for name in plots:
+                        plot_names.append(name)
                     temp = {"id": run['_id'], "user": run['Meta']['user'], "keywords": run['Meta']['keywords'], 
-                            "time": time, "params": display_params}
+                            "time": time, "params": display_params, "plot_names": plot_names}
                     runs.append(temp)
         #Search with filters
         else:
             #Build dictionary of filters based on user form inputs
             filters = get_filters(form)
-            #Query the database (newest to oldest)
-            cursor = collection.find(filters).sort([['_id', -1]])
-            #Collect relevant run info from query results
+            #Query the database
+            results = collection.find(filters).sort([['_id', -1]]).limit(10)
+            #Collect data for all runs in result
             runs = []
-            for run in cursor:
+            for run in results:
                 #Getting upload time of run
                 time = run['_id'].generation_time.date()
-                #Creating a list of dictionaries with relevant info for run
+                #Collecting params
                 params = run['gyrokinetics']['code']['parameters']
                 display_params = []
                 for key, value in params.items():
-                    #Run parameters to be displayed
                     display_params.append([key,value])
+                #Collecting plot names
+                plots = run['Plots']
+                plot_names = []
+                for name in plots:
+                    plot_names.append(name)
+                #Dictionary for access in template
                 temp = {"id": run['_id'], "user": run['Meta']['user'], "keywords": run['Meta']['keywords'], 
-                        "time": time, "params": display_params}
+                        "time": time, "params": display_params, "plot_names": plot_names}
                 runs.append(temp)
     return render_template('data.html', form=form, runs=runs, collection_name=collection_name)
 
+@main.route('/img/<collection_name>/<run_id>/<plot_name>')
+def get_plot(collection_name, run_id, plot_name):
+    collection = mongo.db[collection_name]
+    run = collection.find_one({"_id": ObjectId(run_id)})
+    plot = run['Plots'][plot_name]
+    image = Image.open(BytesIO(base64.decodebytes(plot.encode('utf-8'))))
+    return serve_pil_image(image)
+
+#Helper function for get_plot
+def serve_pil_image(image):
+    img_io = BytesIO()
+    image.save(img_io, 'PNG', quality=100)
+    img_io.seek(0)
+    return send_file(img_io, mimetype='image/png')
+
+#TODO: Update path to QoIs
 #Function for parsing filter values
 def get_filters(form):
     filters = {}
@@ -181,42 +214,76 @@ def get_filters(form):
                     filters.update({field.id: {"$gt": float(field.data)}})
     return filters
 
+#TODO: Fiz zip not opening after download, possibly an encoding issue
 #Route for downloading run by id
-@main.route('/download/<collection_name>/<id>', methods=['GET'])
-def download(collection_name, id):
-    #Instantiate fs object
+@main.route('/download/<collection_name>/<_id>', methods=['GET'])
+def download(collection_name, _id):
+    #Intantiate fs objects for downloading from gridfs
     fs = gridfs.GridFSBucket(mongo.db)
-    #Set collection
+    fsf = gridfs.GridFS(mongo.db)
+    #Create collection object
     collection = mongo.db[collection_name]
-    #Find metadata for run
-    record = collection.find_one({"_id": id})
-    #Save metadata as summary
-    summary = json.dumps(record)
-    #Save 'Files'
-    for key, val in record['Files'].items():
-        if val != "None":
-            filename = db.fs.files.find_one(val)['filename']
-            with open('filename','wb+') as f:
-                fs.download_to_stream(val, f, session=None)
-            record['Files'][key] = str(val)
-    #Save 'Diagnostics'
-    diagnostics = {}
-    for key, val in record['Diagnostics'].items():
-        if isinstance(val, ObjectId):
-            record['Diagnostics'][key] = str(val)
-            diagnostics[key] = binary_to_numpy(fs.get(val).read())
-    #Save 'Plots'
-    for key,val in record['Plots'].items():
-            with open(os.path.join(path, str(record['_id']) + '_' +key+
-                                   record['Meta']['run_suffix']+'.png'), "wb") as imageFile:
+    #Find record
+    records_found = collection.find({"_id": ObjectId(_id)})
+    #Perform download operations
+    for record in records_found:
+        #Create timestamp for unique identification
+        time = str(datetime.datetime.now()).replace(" ","--")
+        #Create directory name for run files
+        dir_name = record['Meta']['run_collection_name'].replace("/", "_") + time
+        #Create path for directory
+        path = "/downloads/" + dir_name
+        #Create directory
+        os.mkdir(path)
+
+        #Download 'Files'
+        for key, val in record['Files'].items():
+            if val != 'None':
+                filename = mongo.db.fs.files.find_one(val)['filename']
+                with open(os.path.join(path, filename),'wb+') as f:
+                    fs.download_to_stream(val, f, session=None)     
+                record['Files'][key] = str(val)           
+        
+        #Download 'Gyrokinetics'
+        for key, val in record['gyrokinetics'].items():
+            if val != 'None':
+                file = record['gyrokinetics']
+                with open(os.path.join(path, 'gyrokinetics.json'), 'w') as f:
+                    json.dump(file, f)
+
+        #Download 'Diagnostics'
+        diag_dict = {}
+        for key, val in record['Diagnostics'].items():
+            if isinstance(val, ObjectId):
+                record['Diagnostics'][key] = str(val)
+                diag_dict[key] = binary2npArray(fsf.get(val).read())   
+        with open(os.path.join(path, str(record['_id']) + '-' + 'diagnostics.pkl'), 'wb') as handle:
+            pickle.dump(diag_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        #Download 'Plots'
+        plots_path = os.path.join(path, 'plots/')
+        os.mkdir(plots_path)
+        for key,val in record['Plots'].items():
+            with open(os.path.join(plots_path, str(record['_id']) + '_' + key +
+                                   record['Meta']['run_suffix'] + '.png'), "wb") as imageFile:
                 decoded = base64.decodebytes(val.encode('utf-8'))
                 imageFile.write(decoded)
-    #Combine all data into zip folder
-    #memory_file = BytesIO()
-    #for file in [records, diagnostics]:
+        
+        #Download record
+        record['_id'] = str(record['_id'])
+        f_path = os.path.join(path, 'mgkdb_summary_for_run' + record['Meta']['run_suffix'] + '.json')
+        with open(f_path, 'w') as f:
+            json.dump(record, f)
+        
+        #Zip folder
+        zip_path = path + ".zip"
+        zf = zipfile.ZipFile(zip_path, "w")
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                zf.write(os.path.join(root, file))
 
-    #return send_file(data, attachment_filename=f'{id}.zip', as_attachment=True)
+    return send_file(zip_path, mimetype='application/zip', as_attachment=True)
 
 #Utility function for unpickling numpy arrays (format of stored data)
-def binary_to_numpy(x):
-    return pickle.loads(x)
+def binary2npArray(binary):
+    return pickle.loads(binary)
