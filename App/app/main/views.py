@@ -214,7 +214,7 @@ def get_filters(form):
                     filters.update({field.id: {"$gt": float(field.data)}})
     return filters
 
-#TODO: Fiz zip not opening after download, possibly an encoding issue
+#TODO: Fix zip not opening after download, possibly an encoding issue
 #Route for downloading run by id
 @main.route('/download/<collection_name>/<_id>', methods=['GET'])
 def download(collection_name, _id):
@@ -281,6 +281,7 @@ def download(collection_name, _id):
         for root, dirs, files in os.walk(path):
             for file in files:
                 zf.write(os.path.join(root, file))
+        zf.close()
 
     return send_file(zip_path, mimetype='application/zip', as_attachment=True)
 

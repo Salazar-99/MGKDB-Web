@@ -16,6 +16,6 @@ Secure a 24 hour ssh key by running
 
 Map local port 27017 to remote db by running
 
-```ssh -4 -i .ssh/nersc -f gsalazar@cori.nersc.gov -L 27017:mongodb03.nersc.gov:27017 -N```
+```ssh -4 -i .ssh/nersc -f gsalazar@cori.nersc.gov -L 27017:mongodb03.nersc.gov:27017 -N````
 
 Ensure this is the port being used in the ```MONGO_URL``` variable stored in the ```.env``` file.
