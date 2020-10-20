@@ -25,6 +25,14 @@ import zipfile
 def index():
     return render_template('index.html', logged_in=False)
 
+@main.route('/getting-started')
+def getting_started():
+    return render_template('getting-started.html')
+
+@main.route('/about')
+def about():
+    return render_template('about.html')
+
 #Signup page
 @main.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -214,7 +222,6 @@ def get_filters(form):
                     filters.update({field.id: {"$gt": float(field.data)}})
     return filters
 
-#TODO: Fix zip not opening after download, possibly an encoding issue
 #Route for downloading run by id
 @main.route('/download/<collection_name>/<_id>', methods=['GET'])
 def download(collection_name, _id):
@@ -284,6 +291,11 @@ def download(collection_name, _id):
         zf.close()
 
     return send_file(zip_path, mimetype='application/zip', as_attachment=True)
+
+#TODO: Somehow the login_manager isn't being imported from __init__
+# @login_manager.unauthorized_handler
+# def unauthorized_callback():
+#     return redirect(url_for('website.index'))
 
 #Utility function for unpickling numpy arrays (format of stored data)
 def binary2npArray(binary):

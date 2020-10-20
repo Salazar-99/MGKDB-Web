@@ -26,16 +26,13 @@
             <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                 <ul class="navbar-nav mr-auto">
                     <li class="nav-item">
-                      <a class="nav-link" href="{{ url_for('main.index') }}">Home</a>
-                    </li>
-                    <li class="nav-item">
                       <a class="nav-link" href="{{ url_for('main.data') }}">Data</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/">Getting Started</a>
+                        <a class="nav-link" href="{{ url_for('main.getting_started') }}">Getting Started</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/">About</a>
+                        <a class="nav-link" href="{{ url_for('main.about') }}">About</a>
                     </li>
                 </ul>
                 <!-- Log In/Sign Up logic depending on logged_in-->
