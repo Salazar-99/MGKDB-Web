@@ -129,9 +129,13 @@ def deny(email):
     return render_template('deny.html')
 
 #Data page
-@main.route('/data', methods=['GET', 'POST'])
+@main.route('/data/<page_number>', methods=['GET'])
 @login_required
-def data():
+def data(page_number=1):
+    #Number of results per page
+    PAGE_LIMIT = 10
+    #URL arguments passed as strings, need to convert to int for query
+    page_number = int(page_number)
     form = FilterForm()
     if form.validate_on_submit:
         #A collection must always be specified
@@ -166,8 +170,8 @@ def data():
         else:
             #Build dictionary of filters based on user form inputs
             filters = get_filters(form)
-            #Query the database
-            results = collection.find(filters).sort([['_id', -1]]).limit(10)
+            #Query the database with pagination, limit hardcoded to 10
+            results = collection.find(filters).sort([['_id', -1]]).skip((page_number-1)*PAGE_LIMIT).limit(PAGE_LIMIT)
             #Collect data for all runs in result
             runs = []
             for run in results:
@@ -187,7 +191,7 @@ def data():
                 temp = {"id": run['_id'], "user": run['Meta']['user'], "keywords": run['Meta']['keywords'], 
                         "time": time, "params": display_params, "plot_names": plot_names}
                 runs.append(temp)
-    return render_template('data.html', form=form, runs=runs, collection_name=collection_name)
+    return render_template('data.html', form=form, runs=runs, collection_name=collection_name, page_number=page_number)
 
 @main.route('/img/<collection_name>/<run_id>/<plot_name>')
 def get_plot(collection_name, run_id, plot_name):
