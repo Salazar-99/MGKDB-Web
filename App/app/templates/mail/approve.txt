@@ -1,0 +1,2 @@
+Account Approved
+Your MGKDB Web account has been approved. You may now browse and download data from the MGKDB database.

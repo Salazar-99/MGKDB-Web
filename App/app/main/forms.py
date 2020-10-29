@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, RadioField, DecimalField
-from wtforms.validators import DataRequired, Length, Email
+from wtforms import StringField, SubmitField, PasswordField, RadioField, DecimalField, IntegerField
+from wtforms.validators import DataRequired, Length, Email, Optional
 import re
 
 class SignupForm(FlaskForm):
@@ -24,15 +24,19 @@ class FilterForm(FlaskForm):
     collection = RadioField('Run Type:', choices=[('LinearRuns', 'Linear Runs'), ('NonlinRuns', 'Non-linear Runs')], validators=[DataRequired()])
     id = StringField('Run ID', id='id')
     #id corresponds to actual name of field in the db, used to generate filters
-    gamma_max = DecimalField(label="gamma_max", id="QoI.gamma(cs/a)")
-    gamma_min = DecimalField(label="gamma_min", id="QoI.gamma(cs/a)")
-    omega_max = DecimalField(label="omega_max", id="QoI.omega(cs/a)")
-    omega_min = DecimalField(label="omega_min", id="QoI.omega(cs/a)")
-    z_max = DecimalField(label="z_max", id="QoI.<z>")
-    z_min = DecimalField(label="z_min", id="QoI.<z>")
-    lambda_z_max = DecimalField(label="lambda_z_max", id="QoI.lambda_z")
-    lambda_z_min = DecimalField(label="lambda_z_min", id="QoI.lambda_z")
+    gamma_max = DecimalField(label="gamma_max", id="QoI.gamma(cs/a)", validators=[Optional()])
+    gamma_min = DecimalField(label="gamma_min", id="QoI.gamma(cs/a)", validators=[Optional()])
+    omega_max = DecimalField(label="omega_max", id="QoI.omega(cs/a)", validators=[Optional()])
+    omega_min = DecimalField(label="omega_min", id="QoI.omega(cs/a)", validators=[Optional()])
+    z_max = DecimalField(label="z_max", id="QoI.<z>", validators=[Optional()])
+    z_min = DecimalField(label="z_min", id="QoI.<z>", validators=[Optional()])
+    lambda_z_max = DecimalField(label="lambda_z_max", id="QoI.lambda_z", validators=[Optional()])
+    lambda_z_min = DecimalField(label="lambda_z_min", id="QoI.lambda_z", validators=[Optional()])
     submit = SubmitField('Search')
+
+class PageForm(FlaskForm):
+    page = IntegerField('Page')
+    submit = SubmitField('Go')
 
 
 

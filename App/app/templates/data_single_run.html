@@ -1,6 +1,5 @@
 {% extends "base.html" %}
-{% from "bootstrap/form.html" import render_form %}
-{% import "macros.html" as macros %}
+{% from 'bootstrap/form.html' import render_form %}
 
 {% block title %}Data - {% endblock %}
 
@@ -8,13 +7,13 @@
 <div class="container">
   <div class="row justify-content-center pt-5 pb-5" style="background-color: #f5f5f5;">
     <!--Data-->
-    <div class="col-10">
+    <div class="col-lg-10">
       <center>
         <h1 class="font-weight-light">
           Data
         </h1>
       </center><br>
-      <div class="row justify-content-center no-gutters">
+      <div class="row justify-content-center">
         <div class="col-md-10">
           <div class="list-group">
             <!--Individual Data Cards-->
@@ -86,23 +85,10 @@
               </div>
             </div><br>
             {% endfor %}
-            <div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
-<div class="row justify-content-center pt-5">
-  <!--Pagination-->  
- {{ macros.data_pagination(collection_name, filters, page_num, max_pages) }}
- 
-</div>
-<div class="row pb-5 justify-content-center">
-  <!--Pagination-->
-  <div class="text-center">
-    {{ render_form(form) }}
-  </div>
-  
 </div>
 {% endblock %}

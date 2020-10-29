@@ -1,7 +1,5 @@
 {% extends "base.html" %}
-
 {% block title %}Getting Started - {% endblock %}
-
 {% block page_content %}
 <div class="container">
     <div class="row justify-content-center">
@@ -9,6 +7,16 @@
         <h2>Getting started with MGKDB</h2>
         <p>There are a variety of ways to interact with the MGKDB database. </p>
         <h4>Web</h4>
+        <p>To get started using the web-based data browser, <a href="{{ url_for('main.signup') }}">Sign Up</a> for an account. 
+          Shortly after signing up you will recieve an email asking you to verify your account. Once your account is verified, wait for an Admin to approve your account request.
+          You will recieve an additional email upon approval.  
+        </p>
+        <p>
+          Once your account has been approved, you can browse the MGKDB database via the <a href="{{ url_for('main.data_form') }}">Data</a> page.
+          Here you can search for runs in two collections: Linear or Non-Linear Runs. Once you have selected the collection you would like to search in you can find a run via its database id
+          or search for a subset of runs with the available filters. Each returned run contains a list of the parameters used to create the run as well as ready viewing of any available diagnostic plots.
+          You can also download the entirety of the runs files from the database. Due to the size of the runs, this usually takes a few seconds but in extreme cases could take a few minutes.
+        </p>
         <h4>Locally</h>
       </div>
     </div>

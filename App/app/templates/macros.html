@@ -1,0 +1,40 @@
+<!--Previous page-->
+{% macro data_pagination(collection_name, filters, page_num, max_pages) %}
+    <div class=text-xs-center>
+        <ul class="pagination">
+            <!--Previous page-->
+            {% if page_num > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('main.data', filters=filters, collection_name=collection_name, page_num=page_num-1) }}">Previous</a>
+            </li>
+            {% endif %}
+            <!--Current page-->
+            <li class="page-item active">
+                <a class="page-link" href="#">{{ page_num }}</a>
+            </li>
+            <!--Page numbers-->
+            {% for page in range(page_num+1, page_num+5) %}
+                {% if page <= max_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('main.data', filters=filters, collection_name=collection_name, page_num=page) }}">{{ page }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            <!--TODO:Make the ellipsis skij 5 pages if that's a valid range-->
+            <!--Ellipsis-->
+            <li class="page-item">
+                <span class="page-link ellipsis" >…</span>
+            </li>
+            <!--Last page-->
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('main.data', filters=filters, collection_name=collection_name, page_num=max_pages) }}">{{ max_pages }}</a>
+            </li>
+            <!--Next page-->
+            {% if page_num+1 <= max_pages %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('main.data', filters=filters, collection_name=collection_name, page_num=page_num+1) }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>   
+    </div> 
+{% endmacro %}

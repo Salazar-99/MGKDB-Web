@@ -8,7 +8,7 @@ import json
 from io import BytesIO
 from zipfile import ZipFile
 from . import main
-from .forms import SignupForm, FilterForm, LoginForm
+from .forms import SignupForm, FilterForm, LoginForm, PageForm
 from ..email import send_email
 from .. import db, mongo
 import gridfs
@@ -112,12 +112,14 @@ def verify(token):
         flash('The verification link is invalid or has expired.')
     return redirect(url_for('main.index'))
 
+#TODO: Add security measures to approve/deny routes
 #Account approval route  - for use by admin
 @main.route('/approve/<email>')
 def approve(email):
     #Change "approved" column in database to True
     User.query.filter_by(email=email).update(dict(approved=True))
-    db.session.commit()    
+    db.session.commit()
+    send_email(email, 'Account Approved', 'mail/approve')
     return render_template('approve.html')
 
 #Account denial route - for use by admin
@@ -128,76 +130,98 @@ def deny(email):
     db.session.commit()
     return render_template('deny.html')
 
-#Data page
-@main.route('/data/<page_number>', methods=['GET'])
+@main.route('/data_form', methods=['GET','POST'])
 @login_required
-def data(page_number=1):
+def data_form():
+    form = FilterForm()
+    if form.validate_on_submit():
+        collection_name = form.collection.data
+        #Single run
+        if form.id.data not in ['None', '']:
+            return redirect(url_for('main.data_single_run', collection_name=collection_name, single_run_id=form.id.data))
+        #Multiple runs
+        else:
+            #Get filters dict and convert to string
+            filters = str(get_filters(form))
+            return redirect(url_for('main.data', filters=filters, collection_name=collection_name, page_num=1))
+    return render_template('data_form.html', form=form)
+
+#Data page for a single run, search by id
+@main.route('/data_single_run/<collection_name>/<single_run_id>', methods=['GET'])
+@login_required
+def data_single_run(collection_name, single_run_id):
+    collection = mongo.db[collection_name]
+    result = collection.find({"_id": ObjectId(single_run_id)})
+    if result is None:
+        flash('Run ID returned no results, try again')
+        return redirect(url_for('main.data_form'))
+    else:
+        runs = []
+        #Should just be one result, keeping loop for consistency in rendering
+        for run in result:
+            #Getting upload time of run
+            time = run['_id'].generation_time.date()
+            #Collecting params
+            params = run['gyrokinetics']['code']['parameters']
+            display_params = []
+            for key, value in params.items():
+                display_params.append([key,value])
+            #Collecting plots
+            plots = run['Plots']
+            plot_names = []
+            for name in plots:
+                plot_names.append(name)
+            temp = {"id": run['_id'], "user": run['Meta']['user'], "keywords": run['Meta']['keywords'], 
+                    "time": time, "params": display_params, "plot_names": plot_names}
+            runs.append(temp)
+    return render_template('data_single_run.html', runs=runs)
+
+#Data page for multiple runs, search by filters
+@main.route('/data/<filters>/<collection_name>/<page_num>', methods=['GET', 'POST'])
+@login_required
+def data(filters, collection_name, page_num):
+    #Search for specific page
+    form = PageForm()
+    if form.validate_on_submit():
+        return redirect(url_for('main.data', filters=filters, collection_name=collection_name, page_num=form.page.data))
     #Number of results per page
     PAGE_LIMIT = 10
     #URL arguments passed as strings, need to convert to int for query
-    page_number = int(page_number)
-    form = FilterForm()
-    if form.validate_on_submit:
-        #A collection must always be specified
-        collection_name = form.collection.data
-        collection = mongo.db[collection_name]
-        #Search by ID
-        if form.id.data not in ['', None]:
-            result = collection.find({"_id": ObjectId(form.id.data)})
-            if result is None:
-                flash('Run ID returned no results, try again')
-                return render_template('data.html', form=form, runs=None, collection_name=collection_name)
-            else:
-                runs = []
-                #Should just be one result, keeping loop for consistency in rendering
-                for run in result:
-                    #Getting upload time of run
-                    time = run['_id'].generation_time.date()
-                    #Collecting params
-                    params = run['gyrokinetics']['code']['parameters']
-                    display_params = []
-                    for key, value in params.items():
-                        display_params.append([key,value])
-                    #Collecting plots
-                    plots = run['Plots']
-                    plot_names = []
-                    for name in plots:
-                        plot_names.append(name)
-                    temp = {"id": run['_id'], "user": run['Meta']['user'], "keywords": run['Meta']['keywords'], 
-                            "time": time, "params": display_params, "plot_names": plot_names}
-                    runs.append(temp)
-        #Search with filters
-        else:
-            #Build dictionary of filters based on user form inputs
-            filters = get_filters(form)
-            #Query the database with pagination, limit hardcoded to 10
-            results = collection.find(filters).sort([['_id', -1]]).skip((page_number-1)*PAGE_LIMIT).limit(PAGE_LIMIT)
-            #Collect data for all runs in result
-            runs = []
-            for run in results:
-                #Getting upload time of run
-                time = run['_id'].generation_time.date()
-                #Collecting params
-                params = run['gyrokinetics']['code']['parameters']
-                display_params = []
-                for key, value in params.items():
-                    display_params.append([key,value])
-                #Collecting plot names
-                plots = run['Plots']
-                plot_names = []
-                for name in plots:
-                    plot_names.append(name)
-                #Dictionary for access in template
-                temp = {"id": run['_id'], "user": run['Meta']['user'], "keywords": run['Meta']['keywords'], 
-                        "time": time, "params": display_params, "plot_names": plot_names}
-                runs.append(temp)
-    return render_template('data.html', form=form, runs=runs, collection_name=collection_name, page_number=page_number)
+    page_num = int(page_num)
+    collection = mongo.db[collection_name]
+    #Get filters dict from filters string
+    filters = eval(filters)
+    #Query the database with pagination, limit hardcoded to 10
+    max_pages = collection.count(filters) // PAGE_LIMIT
+    results = collection.find(filters).sort([['_id', -1]]).skip((page_num-1)*PAGE_LIMIT).limit(PAGE_LIMIT)
+    #Collect data for all runs in result
+    runs = []
+    for run in results:
+        #Getting upload time of run
+        time = run['_id'].generation_time.date()
+        #Collecting params
+        params = run['gyrokinetics']['code']['parameters']
+        display_params = []
+        for key, value in params.items():
+            display_params.append([key,value])
+        #Collecting plot names
+        plots = run['Plots']
+        plot_names = []
+        for name in plots:
+            plot_names.append(name)
+        #Dictionary for access in template
+        temp = {"id": run['_id'], "user": run['Meta']['user'], "keywords": run['Meta']['keywords'], 
+                "time": time, "params": display_params, "plot_names": plot_names}
+        runs.append(temp)
+    return render_template('data.html', form=form, runs=runs, filters=filters, collection_name=collection_name, page_num=page_num, max_pages=max_pages)
 
+#TODO: Fix "Cannot identify image file", might not be an error on my end
 @main.route('/img/<collection_name>/<run_id>/<plot_name>')
 def get_plot(collection_name, run_id, plot_name):
     collection = mongo.db[collection_name]
     run = collection.find_one({"_id": ObjectId(run_id)})
     plot = run['Plots'][plot_name]
+    #Error here
     image = Image.open(BytesIO(base64.decodebytes(plot.encode('utf-8'))))
     return serve_pil_image(image)
 
@@ -295,11 +319,6 @@ def download(collection_name, _id):
         zf.close()
 
     return send_file(zip_path, mimetype='application/zip', as_attachment=True)
-
-#TODO: Somehow the login_manager isn't being imported from __init__
-# @login_manager.unauthorized_handler
-# def unauthorized_callback():
-#     return redirect(url_for('website.index'))
 
 #Utility function for unpickling numpy arrays (format of stored data)
 def binary2npArray(binary):
