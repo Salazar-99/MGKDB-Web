@@ -20,6 +20,7 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Log In')
 
+#TODO: Update filter form to new filters
 class FilterForm(FlaskForm):
     collection = RadioField('Run Type:', choices=[('LinearRuns', 'Linear Runs'), ('NonlinRuns', 'Non-linear Runs')], validators=[DataRequired()])
     id = StringField('Run ID', id='id')
