@@ -5,6 +5,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_pymongo import PyMongo
 from config import config
+from redis import Redis
+import rq
 
 bootstrap = Bootstrap()
 mail = Mail()
@@ -28,6 +30,8 @@ def create_app(config_name):
         db.create_all()
     login_manager.init_app(app)
     mongo.init_app(app)
+    app.redis = Redis.from_url(app.config['REDIS_URI'])
+    app.task_queue = rq.Queue('mgkdb-tasks', connection=app.redis)
 
     #Linking views from 'main' module
     from .main import main as main_blueprint
