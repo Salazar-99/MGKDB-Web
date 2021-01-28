@@ -10,12 +10,12 @@ In order for the App container to connect to the remote DB an ssh tunnel has to 
 
 ```docker exec -it app /bin/bash```
 
-Secure a 24 hour ssh key by running 
-
-```./sshproxy -u gsalazar```
-
-Map local port 27017 to remote db by running
+Map local port 27017 to remote db by running the following command
 
 ```ssh -4 -i .ssh/nersc -f gsalazar@cori.nersc.gov -L 27017:mongodb03.nersc.gov:27017 -N````
 
 Ensure this is the port being used in the ```MONGO_URL``` variable stored in the ```.env``` file.
+
+Access MySQL DB inside running docker container
+
+``` mysql -u username -p -h 172.20.0.0.3 -P 3306```

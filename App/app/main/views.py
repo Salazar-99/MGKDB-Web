@@ -12,13 +12,14 @@ from .forms import SignupForm, FilterForm, LoginForm, PageForm
 from ..email import send_email
 from .. import db, mongo
 import gridfs
-from ..models import User
+from ..models import User, Task, Notification
 from flask_paginate import Pagination, get_page_parameter
 from io import BytesIO
 import base64
 from PIL import Image
 import datetime
 import zipfile
+from time import sleep
 
 #Home page
 @main.route('/')
@@ -249,28 +250,66 @@ def get_filters(form):
                     filters.update({field.id: {"$gt": float(field.data)}})
     return filters
 
-#TODO: How do I return the path of the downloaded files from launching the tasks
+#Route for dynamic notifications
+@main.route('/notifications')
+@login_required
+def notifications():
+    since = request.args.get('since', 0.0, type=float)
+    notifications = current_user.notifications.filter(
+        Notification.timestamp > since).order_by(Notification.timestamp.asc())
+    return jsonify([{
+        'name': n.name,
+        'data': n.get_data(),
+        'timestamp': n.timestamp
+    } for n in notifications])
+
 #Route for downloading run by id
 @main.route('/download_one/<collection_name>/<_id>', methods=['GET'])
 @login_required
 def download_one(collection_name, _id):
     if current_user.get_task_in_progress('download_one') or current_user.get_task_in_progress('download_all'):
-        flash(_('A download task is currently in progress'))
+        flash('A download task is currently in progress')
     else:
-        current_user.launch_task('download_one', _('Downloading runs...'))
+        task = current_user.launch_task(name='download_one', description='Downloading run...')
         db.session.commit()
-    return send_file(zip_path, mimetype='application/zip', as_attachment=True)
+        path = set_target_path(task)
+        wait_for_download(path)
+        return send_file(path, mimetype='application/zip', as_attachment=True)
+    return redirect(url_for('main.data', filters=filters, collection_name=collection_name, page_num=1))
 
 #Route for downloading all results of a search
 @main.route('/download_all/<collection_name>/<filters>', methods=['GET'])
 @login_required
 def download_all(collection_name, filters):
     if current_user.get_task_in_progress('download_one') or current_user.get_task_in_progress('download_all'):
-        flash(_('A download task is currently in progress'))
+        flash('A download task is currently in progress')
     else:
-        current_user.launch_task('download_all', _('Downloading runs...'))
+        task = current_user.launch_task(name='download_all', description='Downloading runs...')
         db.session.commit()
-    return send_file(zip_path, mimetype='application/zip', as_attachment=True)
+        path = set_target_path(task)
+        wait_for_download(path)
+        return send_file(path, mimetype='application/zip', as_attachment=True)
+    return redirect(url_for('main.data', filters=filters, collection_name=collection_name, page_num=1))
+
+def set_target_path(task):
+    path = '/downloads/' + str(task.id)
+    return path
+
+def wait_for_download(path):
+    #Wait for file to appear
+    time = 0
+    while not os.path.exists(path):
+        sleep(1)
+        time += 1
+        print(f"Waiting for file to appear...({time} seconds)")
+    #Check size of file until it stops changing (download is complete)
+    size = os.path.getsize(path)
+    sleep(0.25)
+    new_size = os.path.getsize(path)
+    while size != new_size:
+        size = os.path.getsize(path)
+        sleep(0.25)
+        new_size = os.path.getsize(path)
 
 #Utility function for unpickling numpy arrays (format of stored data)
 def binary2npArray(binary):

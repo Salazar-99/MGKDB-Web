@@ -14,11 +14,6 @@
           Data
         </h1>
       </center><br>
-      <!--Download all-->
-      <div class="row justify-content-center pt-5">
-        <a type="button" class="btn btn-dark" href={{ url_for('main.download_all', collection_name=collection_name,  filters=filters, _external=True) }}>Download All
-        </a>
-      </div>
       <div class="row justify-content-center no-gutters">
         <div class="col-md-10">
           <div class="list-group">
@@ -91,6 +86,11 @@
               </div>
             </div><br>
             {% endfor %}
+            <!--Download all-->
+            <div class="row justify-content-center pt-2 pb-2">
+              <a type="button" class="btn btn-dark" href={{ url_for('main.download_all', collection_name=collection_name,  filters=filters, _external=True) }}>Download All Results
+              </a>
+            </div>
             <div>
           </div>
         </div>
@@ -98,6 +98,7 @@
     </div>
   </div>
 </div>
+
 <div class="row justify-content-center pt-5">
   <!--Pagination-->  
  {{ macros.data_pagination(collection_name, filters, page_num, max_pages) }}

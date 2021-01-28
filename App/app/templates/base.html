@@ -64,7 +64,55 @@
 
 <!--Everything above this line is common to every template, below this line is where template-unique content is included-->
 {% block content %}
-        {% block page_content %}
-        {% endblock %}
+    <!--Downloads progress bar-->
+    <div class="container pt-2">
+        {% if current_user.is_authenticated %}
+            {% with tasks = current_user.get_tasks_in_progress() %}
+            {% if tasks %}
+                {% for task in tasks %}
+                    {% set task_progress = task.get_progress() %}
+                    {% if task_progress < 100 %}
+                        <div class="alert alert-success" role="alert">
+                            {{ task.description }}
+                        <span id="{{ task.id }}-progress">{{ task_progress }}</span>%
+                    {% endif %}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+        {% endif %}
+
+    {% block page_content %}
+    {% endblock %}
+    
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        function set_task_progress(task_id, progress) {
+            $('#' + task_id + '-progress').text(progress);
+        }
+        // Notification polling
+        {% if current_user.is_authenticated %}
+            $(function() {
+                var since = 0;
+                setInterval(function() {
+                    $.ajax('{{ url_for('main.notifications') }}?since=' + since).done(
+                        function(notifications) {
+                            for (var i = 0; i < notifications.length; i++) {
+                                switch (notifications[i].name) {
+                                    case 'task_progress':
+                                        set_task_progress(notifications[i].data.task_id,
+                                            notifications[i].data.progress);
+                                        break;
+                                }
+                                since = notifications[i].timestamp;
+                            }
+                        }
+                    );
+                }, 1000);
+            });
+        {% endif %}
+    </script>
 {% endblock %}
 </html>

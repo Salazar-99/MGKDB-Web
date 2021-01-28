@@ -42,7 +42,6 @@ services:
     worker:
         container_name: worker
         image: mgkdb:worker
-        command: python rq worker -u redis://redis-server:6379/0 mgkdb-tasks
         volumes:
             - ./App:/app/
             - downloads:/downloads/
@@ -51,6 +50,14 @@ services:
             - redis:redis-server
         depends_on: 
             - redis
+    dashboard:
+        image: dashboard:latest
+        container_name: dashboard
+        ports:
+        - 9181:9181
+        command: rq-dashboard -H redis
+        depends_on:
+        - redis
 
 #Docker-handled volumes
 volumes:
