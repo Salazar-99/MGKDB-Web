@@ -21,7 +21,8 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Log In')
 
 class FilterForm(FlaskForm):
-    collection = RadioField('Run Type:', choices=[('LinearRuns', 'Linear Runs'), ('NonlinRuns', 'Non-linear Runs')], validators=[DataRequired()])
+    #Eventually add back Nonlinear runs
+    collection = RadioField('Run Type:', choices=[('LinearRuns', 'Linear Runs')], validators=[DataRequired()])
     id = StringField('Run ID', id='id')
     #id corresponds to actual name of field in the db, used to generate filters
     gamma_max = DecimalField(label="gamma_max", id="Diagnostics.omega.gamma", validators=[Optional()])

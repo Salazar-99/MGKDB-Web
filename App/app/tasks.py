@@ -30,7 +30,7 @@ def download_all(user_id, collection_name, filters):
         set_task_progress(0)
         i = 0
         for run in results:
-            path = download_one(collection_name, run['_id'])
+            path = download(collection_name, run['_id'])
             paths.append(path)
             i += 1
             set_task_progress(100*(i//N))
@@ -53,9 +53,11 @@ def download_all(user_id, collection_name, filters):
         app.logger.error('Redis task error', exc_info=sys.exc_info())
 
 #Download one Redis Task
-def download_one(collection_name, _id):
-    try: 
+def download_one(user_id, collection_name, _id):
+    try:
+        set_task_progress(0)
         zip_path = download(collection_name, _id)
+        set_task_progress(100)
     except:
         app.logger.error('Redis task error', exc_info=sys.exc_info())
 
@@ -80,7 +82,6 @@ def download(collection_name, _id):
             os.mkdir(path)
             #Save zip path to DB
             zip_path = path + ".zip"
-            save_path_to_db(job, zip_path)
             
             #Download 'Files'
             for key, val in record['Files'].items():
