@@ -12,13 +12,14 @@ from .forms import SignupForm, FilterForm, LoginForm, PageForm
 from ..email import send_email
 from .. import db, mongo
 import gridfs
-from ..models import User
+from ..models import User, Task, Notification
 from flask_paginate import Pagination, get_page_parameter
 from io import BytesIO
 import base64
 from PIL import Image
 import datetime
 import zipfile
+from time import sleep
 
 #Home page
 @main.route('/')
@@ -232,7 +233,6 @@ def serve_pil_image(image):
     img_io.seek(0)
     return send_file(img_io, mimetype='image/png')
 
-#TODO: Update path to QoIs
 #Function for parsing filter values
 def get_filters(form):
     filters = {}
@@ -250,75 +250,66 @@ def get_filters(form):
                     filters.update({field.id: {"$gt": float(field.data)}})
     return filters
 
+#Route for dynamic notifications
+@main.route('/notifications')
+@login_required
+def notifications():
+    since = request.args.get('since', 0.0, type=float)
+    notifications = current_user.notifications.filter(
+        Notification.timestamp > since).order_by(Notification.timestamp.asc())
+    return jsonify([{
+        'name': n.name,
+        'data': n.get_data(),
+        'timestamp': n.timestamp
+    } for n in notifications])
+
 #Route for downloading run by id
-@main.route('/download/<collection_name>/<_id>', methods=['GET'])
-def download(collection_name, _id):
-    #Intantiate fs objects for downloading from gridfs
-    fs = gridfs.GridFSBucket(mongo.db)
-    fsf = gridfs.GridFS(mongo.db)
-    #Create collection object
-    collection = mongo.db[collection_name]
-    #Find record
-    records_found = collection.find({"_id": ObjectId(_id)})
-    #Perform download operations
-    for record in records_found:
-        #Create timestamp for unique identification
-        time = str(datetime.datetime.now()).replace(" ","--")
-        #Create directory name for run files
-        dir_name = record['Meta']['run_collection_name'].replace("/", "_") + time
-        #Create path for directory
-        path = "/downloads/" + dir_name
-        #Create directory
-        os.mkdir(path)
+@main.route('/download_one/<collection_name>/<_id>', methods=['GET'])
+@login_required
+def download_one(collection_name, _id):
+    if current_user.get_task_in_progress('download_one') or current_user.get_task_in_progress('download_all'):
+        flash('A download task is currently in progress')
+    else:
+        task = current_user.launch_task(name='download_one', description='Downloading run...')
+        db.session.commit()
+        path = set_target_path(task)
+        wait_for_download(path)
+        return send_file(path, mimetype='application/zip', as_attachment=True)
+    return redirect(url_for('main.data', filters=filters, collection_name=collection_name, page_num=1))
 
-        #Download 'Files'
-        for key, val in record['Files'].items():
-            if val != 'None':
-                filename = mongo.db.fs.files.find_one(val)['filename']
-                with open(os.path.join(path, filename),'wb+') as f:
-                    fs.download_to_stream(val, f, session=None)     
-                record['Files'][key] = str(val)           
-        
-        #Download 'Gyrokinetics'
-        for key, val in record['gyrokinetics'].items():
-            if val != 'None':
-                file = record['gyrokinetics']
-                with open(os.path.join(path, 'gyrokinetics.json'), 'w') as f:
-                    json.dump(file, f)
+#Route for downloading all results of a search
+@main.route('/download_all/<collection_name>/<filters>', methods=['GET'])
+@login_required
+def download_all(collection_name, filters):
+    if current_user.get_task_in_progress('download_one') or current_user.get_task_in_progress('download_all'):
+        flash('A download task is currently in progress')
+    else:
+        task = current_user.launch_task(name='download_all', description='Downloading runs...')
+        db.session.commit()
+        path = set_target_path(task)
+        wait_for_download(path)
+        return send_file(path, mimetype='application/zip', as_attachment=True)
+    return redirect(url_for('main.data', filters=filters, collection_name=collection_name, page_num=1))
 
-        #Download 'Diagnostics'
-        diag_dict = {}
-        for key, val in record['Diagnostics'].items():
-            if isinstance(val, ObjectId):
-                record['Diagnostics'][key] = str(val)
-                diag_dict[key] = binary2npArray(fsf.get(val).read())   
-        with open(os.path.join(path, str(record['_id']) + '-' + 'diagnostics.pkl'), 'wb') as handle:
-            pickle.dump(diag_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+def set_target_path(task):
+    path = '/downloads/' + str(task.id)
+    return path
 
-        #Download 'Plots'
-        plots_path = os.path.join(path, 'plots/')
-        os.mkdir(plots_path)
-        for key,val in record['Plots'].items():
-            with open(os.path.join(plots_path, str(record['_id']) + '_' + key +
-                                   record['Meta']['run_suffix'] + '.png'), "wb") as imageFile:
-                decoded = base64.decodebytes(val.encode('utf-8'))
-                imageFile.write(decoded)
-        
-        #Download record
-        record['_id'] = str(record['_id'])
-        f_path = os.path.join(path, 'mgkdb_summary_for_run' + record['Meta']['run_suffix'] + '.json')
-        with open(f_path, 'w') as f:
-            json.dump(record, f)
-        
-        #Zip folder
-        zip_path = path + ".zip"
-        zf = zipfile.ZipFile(zip_path, "w")
-        for root, dirs, files in os.walk(path):
-            for file in files:
-                zf.write(os.path.join(root, file))
-        zf.close()
-
-    return send_file(zip_path, mimetype='application/zip', as_attachment=True)
+def wait_for_download(path):
+    #Wait for file to appear
+    time = 0
+    while not os.path.exists(path):
+        sleep(1)
+        time += 1
+        print(f"Waiting for file to appear...({time} seconds)")
+    #Check size of file until it stops changing (download is complete)
+    size = os.path.getsize(path)
+    sleep(0.25)
+    new_size = os.path.getsize(path)
+    while size != new_size:
+        size = os.path.getsize(path)
+        sleep(0.25)
+        new_size = os.path.getsize(path)
 
 #Utility function for unpickling numpy arrays (format of stored data)
 def binary2npArray(binary):

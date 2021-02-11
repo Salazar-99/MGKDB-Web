@@ -1,4 +1,19 @@
-#For development
+# This is the development stack for MGKDB Web.
+# This architecrure will need to be replicated and slightly modified for production use on Rancher
+
+# Containers:
+#     app - Contains the main application code
+#     db - MySQL database for App users and Redis tasks
+#     redis - Redis queue server for tasking
+#     worker - Redis worker container running modified app image
+
+# Volumes:
+#     app - Used to mirror application code to container for dev purposes,
+#           The source is defined manually as ./App while the other two are handled by Docker
+#     db-data - Used to persist mysql db data, linked to both app and worker
+#     downloads - Used to store downloaded files, needs to be periodically cleaned
+#                 linked to both app and worker
+
 version: '3'
 services:
     app:
@@ -6,6 +21,7 @@ services:
         image: mgkdb:latest
         volumes:
             - ./App:/app/
+            - downloads:/downloads/
         ports:
             - "5000:5000"
         links:
@@ -18,6 +34,37 @@ services:
         env_file: DB/.env-mysql
         cap_add:
             - SYS_NICE
+    redis:
+        container_name: redis
+        image: redis:latest
+        ports:
+            - "6379:6379"
+    worker:
+        container_name: worker
+        image: mgkdb:worker
+        volumes:
+            - ./App:/app/
+            - downloads:/downloads/
+        links:
+            - mysql:dbserver
+            - redis:redis-server
+        depends_on: 
+            - redis
+    dashboard:
+        image: dashboard:latest
+        container_name: dashboard
+        ports:
+        - 9181:9181
+        command: rq-dashboard -H redis
+        depends_on:
+        - redis
+
+#Docker-handled volumes
+volumes:
+    db-data:
+    downloads:
+
+#Nginx for production
     # nginx:
     #     container_name: nginx
     #     image: nginx:latest
@@ -25,5 +72,3 @@ services:
     #         - 1337:8081
     #     depends_on:
     #         - app
-volumes:
-    db-data:

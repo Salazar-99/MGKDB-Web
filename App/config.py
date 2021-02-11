@@ -26,6 +26,8 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     #SSH tunnel remote to localhost and connect locally
     MONGO_URI = os.environ.get('MONGO_URL')
+    #Connects to redis container
+    REDIS_URI = os.environ.get('REDIS_URL')
 
 class ProductionConfig(Config):
     DEBUG = False

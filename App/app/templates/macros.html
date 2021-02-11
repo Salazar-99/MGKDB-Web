@@ -20,15 +20,18 @@
                     </li>
                 {% endif %}
             {% endfor %}
-            <!--TODO:Make the ellipsis skij 5 pages if that's a valid range-->
             <!--Ellipsis-->
+            {% if page_num+5 < max_pages %}
             <li class="page-item">
-                <span class="page-link ellipsis" >…</span>
+                <a class="page-link ellipsis" href="{{ url_for('main.data', filters=filters, collection_name=collection_name, page_num=page_num+5) }}">…</a>
             </li>
+            {% endif %}
             <!--Last page-->
+            {% if max_pages > 0 %}
             <li class="page-item">
                 <a class="page-link" href="{{ url_for('main.data', filters=filters, collection_name=collection_name, page_num=max_pages) }}">{{ max_pages }}</a>
             </li>
+            {% endif %}
             <!--Next page-->
             {% if page_num+1 <= max_pages %}
             <li class="page-item">

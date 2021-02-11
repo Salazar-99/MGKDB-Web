@@ -3,7 +3,7 @@
 {% block page_content %}
 <div class="container">
     <div class="row justify-content-center">
-      <div class="col-8 pt-5 pl-5 pb-5" style="background-color: #f7f7f7;">
+      <div class="col-8 pt-5 pl-5 pb-5 pr-5" style="background-color: #f7f7f7;">
         <h2>Getting started with MGKDB</h2>
         <p>There are a variety of ways to interact with the MGKDB database. </p>
         <h4>Web</h4>
@@ -13,11 +13,15 @@
         </p>
         <p>
           Once your account has been approved, you can browse the MGKDB database via the <a href="{{ url_for('main.data_form') }}">Data</a> page.
-          Here you can search for runs in two collections: Linear or Non-Linear Runs. Once you have selected the collection you would like to search in you can find a run via its database id
-          or search for a subset of runs with the available filters. Each returned run contains a list of the parameters used to create the run as well as ready viewing of any available diagnostic plots.
-          You can also download the entirety of the runs files from the database. Due to the size of the runs, this usually takes a few seconds but in extreme cases could take a few minutes.
+          Here you can search for runs in two collections: Linear or Non-Linear. Once you have selected the collection you would like to search you can either find a specific run via its database id
+          or search for a subset of runs by applying the available filters. Each returned run contains a list of the parameters used to create the run as well as ready viewing of any available diagnostic plots.
+          You can also download the entirety of the run's files from the database. Due to the size of the runs, this usually takes a few seconds but in extreme cases could take a few minutes.
         </p>
-        <h4>Locally</h>
+        <h4>Locally</h4>
+        <p>If you have been granted permission, you can run and alter the MGKDB codebase locally by cloning the
+          <a href="https://bitbucket.org/dykuang/mgk-dev/src/master/"> repo</a> and 
+          reading the <a href="https://bitbucket.org/dykuang/mgk-dev/wiki/Home"> wiki</a>.
+        </p>
       </div>
     </div>
 </div>

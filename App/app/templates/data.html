@@ -37,7 +37,7 @@
                   </div>
                   <div class="col-1">
                     <!--Download button-->
-                    <a type="button" class="btn btn-dark" href={{ url_for('main.download', collection_name=collection_name,  _id=run['id'], _external=True) }}>↓
+                    <a type="button" class="btn btn-dark" href={{ url_for('main.download_one', collection_name=collection_name,  _id=run['id'], _external=True) }}>↓
                     </a>
                     <br>
                     <br>
@@ -66,7 +66,7 @@
                             </button>
                           </div>
                           <div class="modal-body text-center">
-                            <img src="{{ url_for('main.get_plot', collection_name=collection_name, run_id=run['id'], plot_name=plot_name) }}">
+                            <img src="{{ url_for('main.get_plot', collection_name=collection_name, run_id=run['id'], plot_name=plot_name) }}" alt="Plot not available">
                           </div>
                         </div>
                       </div>
@@ -86,6 +86,11 @@
               </div>
             </div><br>
             {% endfor %}
+            <!--Download all-->
+            <div class="row justify-content-center pt-2 pb-2">
+              <a type="button" class="btn btn-dark" href={{ url_for('main.download_all', collection_name=collection_name,  filters=filters, _external=True) }}>Download All Results
+              </a>
+            </div>
             <div>
           </div>
         </div>
@@ -93,16 +98,15 @@
     </div>
   </div>
 </div>
+
 <div class="row justify-content-center pt-5">
   <!--Pagination-->  
  {{ macros.data_pagination(collection_name, filters, page_num, max_pages) }}
- 
 </div>
 <div class="row pb-5 justify-content-center">
   <!--Pagination-->
   <div class="text-center">
     {{ render_form(form) }}
   </div>
-  
 </div>
 {% endblock %}

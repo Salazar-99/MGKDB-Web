@@ -4,6 +4,7 @@
 while true; do
     #For first time deploying
     #python -m flask db init
+    python -m flask db migrate
     python -m flask db upgrade
     #Only breaks once exit status of above command is 0
     if [[ "$?" == "0" ]]; then
